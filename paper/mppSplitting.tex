@@ -1,0 +1,74 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{multicol}
+\setlength{\columnsep}{0.75cm}
+\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{csquotes}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\usepackage{hyperref}
+\usepackage[margin=1.75cm]{geometry}
+
+%\graphicspath{{img/}}
+
+\title{Optimized Payment Execution and Planning Strategy for the Lightning Network}
+
+
+\begin{document} 
+
+\author{Rene Pickhardt}
+
+\maketitle
+
+ 
+\begin{abstract}
+lets go
+\end{abstract}
+
+%==========================================================================
+\section{Introduction}
+
+\section{Mathmatical background}
+Let $a$ be the amount that is supposed to be delivered from a sending node to a receiving node on the Lightning Network.
+An $n$-split of $a$ is a collection of of positive integers $a_1,\dots,a_n \in \mathbb{N}$ such that $\sum_{i=1}^na_i=a$.
+Given $a$ we wonder how to choose an $n$-split of $a$ so that the payment reliability is maximized.\footnote{one proxy for that could be to minimize the expectation value of attampts. However given the fact that we have concurrency in reality this might not be the best proxy. Maximizing the Likelihood is inverse to the expectation value and thus also potentially not the best metric. If we can't coming up with something better we need to focus on this metric as a proxy.}
+
+\subsection{Single channel and single path}
+Let $P(X \geq a)$ be the channel success probability for a payment of size $a$.
+Further $a_1,a_2$ be two positive numbers such that $a=a_1+a_2$. 
+Let us assume $a_1$ was delivered successful.
+We can now update the prior probability and compute the likelihood for $a_2$ to be delivered.
+
+
+
+\section{Results}
+
+\section{next steps}
+\begin{itemize}
+\item implementing and describing the general case (n-split) on actual lightning network data that is based on solving the optimization problem with lagrange multipliers. (shall we use an arbitrary probability distribution as a prior or shall we use uniform distributions? I guess to describe the problem we can use arbitrary distributions and for the solution we can compute this with uniform priors.)
+\item Understand if the solution to the non linear system of equation that arises from the lagrange multipliers can efficiently be approximated well enough (for example taylor approximation!) and quantify the loss in effectiveness in comparison to gain in computational complexity.
+\item define a proper experimental setup strategy (probably using proper sampling of payment pairs and amounts)
+\item solve the candidate selection process (e.g. take highest likely path with full amount reduce capacities by the amount and select next probable path (this allows for non disjoint paths) or remove that path completely (this allows for disjoint paths)) both strategies are obviously only an approximation to path selection. But it is infeasble to take \textit{all} paths and solve the problem on subsets.\footnote{maybe neglect this until next paper it seems to me a different modelling approach of the problem would have to be taken. not sure if we can solve this and it seems all the other stuff is already pretty dense}
+\item adopt the problem to non disjoint problems
+\item define the payment planning and execution algorithm. I currently have the following in mind:
+  \begin{enumerate}
+  \item generate $n$ candidate paths and rank them by likelihood (with one of the two mentioned strategies and the dijkstra search on the minus-log-prob weighted graph arising from previous research).
+  \item solve the optimal split for the top $k$ paths according to the exact math (or approximation if feasable).
+  \item concurrently make attempts of the $k$ split with the highest overall success probability.
+  \item after the first failed attempt wait a timeout to collect more failures and solve the problem for the residual amount by first updating the probabilities via the learnt information and then repeat from step one. (In later repitation include any failed onions from all previous rounds)
+  \item do this for $x$ rounds or until the graph does produce splits with sufficiently high probabilities anymore. 
+  \end{enumerate}
+\item Test how quickly (after how many rounds) we know for sure that we cannot find a path! or at least that the success probability drops to a certain amount! this can be the basis for an adaptive strategy for the number of rounds. e.g. we can say that we do not want to try if the success probabilty goes below $p$ or we don't do more rounds. In this way we can very precisly define service level agreements.
+  \item include the optimal local splitting strategy to optimize channels towards the gini coefficient of the imbalance paper \cite{Pickhardt2019}. (while this will decrease the success probability it might over all improve the network as channels become normally distributed) we can simulate the effect of that change a) on a local level but also b) if everyone implements this!
+\end{itemize}
+
+
+\bibliography{mppSplitting}
+\bibliographystyle{plain}
+
+
+%\end{multicols}
+\end {document}
