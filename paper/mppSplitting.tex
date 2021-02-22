@@ -165,6 +165,26 @@ Nevertheless we depicted the results for some concrete values of $a$ in figure \
   \item include the optimal local splitting strategy to optimize channels towards the gini coefficient of the imbalance paper \cite{Pickhardt2019}. (while this will decrease the success probability it might over all improve the network as channels become normally distributed) we can simulate the effect of that change a) on a local level but also b) if everyone implements this!
 \end{itemize}
 
+\subsection{newer thoughts after running examples}
+
+\begin{enumerate}
+\item Maybe it is possible to get rid of candidate path generation.
+We could use a very large $k$-split over \textit{all} paths and adopt the optimization problem to not allow negative amounts or amounts larger than channel or the amount to send.
+This could yield a solution of the $k$ split in which $l\leg k$ variables are zero in the optimal solution as the solution is on the border of the constrained problem.
+\item With regard to splitting strategies we could write down probabilities for equidistant split, the optimial split and the start split before the optimization problem (which is proportional to the smallest channel across each path).
+\item I think it was mentioned before but especially when following through the first idea we have to account for non disjoint paths.
+\end{enumerate}
+
+Conclusion: I think there is a reasonable chance to formulate this problem as a global optimization problem.
+  
+
+\subsection{Thoughts after phone call}
+\begin{enumerate}
+\item It is rather easy to drop the disjoin path assumption in candidate selection. if two paths with amounts $a_1,a_2$ share the capacity $c$ edge we take $\frac{c+1-a_1-a_2}{c+1}$ into account instead of $\frac{c+1-a_1}{c+1}\cdot\frac{c+1-a_2}{c+1}$
+\item We suspect that the round based algorithm will actually be able to decide the flow problem. However we are not sure if we can formally proof completeness. In case we find a counter example it would be good to have an empirical evaluation how often the algorithm tends to decide the flow problem correctly.
+\item With respect to metrics. Success means a correct decision of the flow problem. That should be 100\% or at least quantifilable. What we are interested in is how quickly is the decision found? 
+\item Another \textit{shower thought}: Respecting routing fees would actually result as a nother contrain to the optimizing problem
+\end{enumerate}
 
 \bibliography{mppSplitting}
 \bibliographystyle{plain}
