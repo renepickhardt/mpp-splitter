@@ -101,12 +101,12 @@ For the reminder we allocate 1 satoshi along the most likeli path on the updated
 
 \subsection{Conditional Probabilities}
 Let $P$ be a probability distribution encoding the channel balance and $a$ be the amount that is supposed to be sent along this channel.
-If $b<a$ We can use the chain rule for conditional probabilities to express the channel success probability of the split the amount into $b$ and $a-b$ as a product of two factors:
+If $b<a$\footnote{for the chainrule itself it does not matter that $b<a$ but we need that for everything else that we do.} we can use the chain rule for conditional probabilities to express the channel success probability of the split the amount into $b$ and $a-b$ as a product of two factors:
 \[
 P(X \geq a) = P(X \geq a | X \geq b)\cdot P(X \geq b)
 \]
 We call $P(X\geq a | X \geq b)$ the channel success probability to send $a$ under the condition that $b$ has already been sent successfully.
-So if $1$ satoshi was already send on a channel and we want to send $1$ additional satoshi this will be expressed with $P(X\geq 2 | X \geq 1)$
+So if $1$ satoshi was already send on a channel and we want to send $1$ additional satoshi this will be expressed with $P(X\geq 2 | X \geq 1)$.
 
 We observe that
 \[
@@ -118,7 +118,7 @@ Thus we can express the conditional probability as:
 P(X\geq a| X\geq b) = \frac{P(X \geq a)}{P(X\geq b)}
 \]
 Multiplying both sides with $P(X\geq b)$ gives us the chain rule of conditional probability as expected.
-From this we see that we cannot improve the success probability of a single channel by splitting the amout into sever parts which all have to go through this channel.
+From this we see that we cannot improve the success probability of a single channel by splitting the amout into several parts which all have to go through this channel.
 This property is expected.
 
 We can now study the question wether it is more likeli to be able to deliver the full amount $a$ in a channel knowing that $a$ satoshi was already delivered or to be able to deliver $a-1$ initially.
