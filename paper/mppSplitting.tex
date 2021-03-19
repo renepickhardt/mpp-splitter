@@ -95,6 +95,8 @@ Given a Lightning Network channel graph and two nodes $s$ and $d$ as well as a t
 In order to find the optimal split of $a$ into $k$ paths $\pi_1,\dots,\pi_k$ we start with an inefficient algorithm.
 We set $a_1 = 1$
 We build $(V,E_1)$ and computed the shortes $(s,d)$ path with respect to the log probabilities $-log(P_{i,j}(X \geq a))$.
+We update the probabilities and try to send the reminder on the updated graph.
+For the reminder we allocate 1 satoshi along the most likeli path on the updated graph and iterate this untill everything is allocated.
 \todo[inline]{RP: I don't know how I can proof correctness of the algorithm. it seems trivial / correct by design. but the following two lemmas should help with the proof but I need to introduce a little bit of notation first}
 
 \subsection{Conditional Probabilities}
