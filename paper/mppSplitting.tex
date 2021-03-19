@@ -1,6 +1,6 @@
 \documentclass[10pt,twocolumn]{article}
 \usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
 %\usepackage[full]{textcomp}
 %\usepackage{fdsymbol}
 %\usepackage{newtxtext,newtxmath}
@@ -9,11 +9,17 @@
 \usepackage{caption}
 \usepackage{graphicx}
 \usepackage{csquotes}
+\usepackage{todonotes}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \usepackage{hyperref}
 \usepackage[margin=1.75cm]{geometry}
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
 
 %\graphicspath{{img/}}
 
@@ -37,11 +43,11 @@ lets go
 \section{Mathmatical background}
 Let $a\in\mathbb{N}$ be the amount that is supposed to be delivered from a sending node to a receiving node on the Lightning Network.
 We define the weithed directed Graph $G_a = (V,E_a)$. 
-$V$ is the set of vertices and $E\subset V\times V \times \mathbb{R}_+$ the set of edges with the weight as the third component.
+$V$ is the set of vertices and $E_a\subset V\times V \times \mathbb{R}_+$ the set of edges with the weight as the third component.
 Given two nodes $v_i$ and $v_j$ an edge $e_{i,j}=(v_i,v_j,l_{i,j})$ in this graph exists if and only if there is a payment channel between the nodes $v_i$ and $v_j$.
 Let $P_{i,j}(X\geq a)$ be the channel success probability for a payment of amount $a$ from node $v_i$ to $v_j$.
 Note that due to some knowledge that nodes learn during the payment process $P_{i,j}(X\geq a) \neq P_{j,i}(X\geq a)$ even though equality might hold initially for many edges.
-Then the value $l_{i,j}$ encodes the negative log probability $l_{i,j} = - log(P_{i,j}(X\geq a))$ that the amount $a$ can successcully be forwarded from node $v_i$ to node $v_j$.
+Then the value $l_{i,j}$ encodes the negative log probability $l_{i,j} = - \log(P_{i,j}(X\geq a))$ that the amount $a$ can successcully be forwarded from node $v_i$ to node $v_j$.
 If $P_{i,j}(X\geq a) = 0$\footnote{for example because $a$ is larger than the channel capacity} instead of setting $l_{i,j}=\infty$ we remove the edge.
 If the probability takes the value $1$ and routing ability is certain we set the weight to $0$ as defined by the logarithm and keep the edge.
 
@@ -73,7 +79,128 @@ p_{s,d}(a_1,\dots,a_k) = \prod_{i=1}^k\left(\prod_{l_{v,u}\in\pi_i}P_{v,u}(X\geq
 which is a function $p_{s,d}:\mathbb{R}^k_+\longrightarrow\mathbb{R}_+$ and depends only on the fixed channel success probabilities and the $k$-split of the amount $a$ which serves as a constraining condition.
 We can thus compute the maximum probability by solving the optimization problem using the method of Lagrange multipliers.
 .
-\subsection{Example using uniform distributions}
+
+We note that this formula easily generalizes to the case of non disjoint paths in which some paths share a common edge.
+Let us look at $p_{s,d}(a_1,a_2)$ in which both $(s,d)$-paths $\pi_1$ and $\pi_2$ share the edge $(v,u)$.
+Instead of having the two factos $P_{v,u}(X\geq a_1)$ and $P_{v,u}(X\geq a_2)$ contributing to the success probability we will just have to use the term $P_{v,u}(X\geq a_1 + a_2)$.
+let $\pi_1,\dots,\pi_k$ be $k$ not necessarily disjoint $(s,d)$-paths forming a $k$-part payment $\pi_{s,d}$ for the amount $a=\sum_{i=1}^ka_i$.
+Using the former idea we can define the $(s,d)$-path success probability for the non disjoint $k$-part payment $\pi_{s,d}$ as:
+\[
+p_{s,d}(a_1,\dots,a_k)=\prod_{(v,u)\in \pi}P_{v,u}\left(X \geq \sum_{i:(v,u)\in \pi_i} a_i\right)
+\]
+
+\todo[inline]{RP: make a note about channel direction. technically in an MPP split a channel could be used in two directions. However this is always less preferable than just splitting the payment differently in the beginning}
+
+Given a Lightning Network channel graph and two nodes $s$ and $d$ as well as a total payment amount $a$ we are interested to find a split of $a$ into $k$ parts such that $a=\sum_{i=1}^ka_i$ and $p_{s,d}(a_1,\dots,a_k)$ is maximized.
+In order to find the optimal split of $a$ into $k$ paths $\pi_1,\dots,\pi_k$ we start with an inefficient algorithm.
+We set $a_1 = 1$
+We build $(V,E_1)$ and computed the shortes $(s,d)$ path with respect to the log probabilities $-log(P_{i,j}(X \geq a))$.
+\todo[inline]{RP: I don't know how I can proof correctness of the algorithm. it seems trivial / correct by design. but the following two lemmas should help with the proof but I need to introduce a little bit of notation first}
+
+\subsection{Conditional Probabilities}
+Let $P$ be a probability distribution encoding the channel balance and $a$ be the amount that is supposed to be sent along this channel.
+If $b<a$ We can use the chain rule for conditional probabilities to express the channel success probability of the split the amount into $b$ and $a-b$ as a product of two factors:
+\[
+P(X \geq a) = P(X \geq a | X \geq b)\cdot P(X \geq b)
+\]
+We call $P(X\geq a | X \geq b)$ the channel success probability to send $a$ under the condition that $b$ has already been sent successfully.
+So if $1$ satoshi was already send on a channel and we want to send $1$ additional satoshi this will be expressed with $P(X\geq 2 | X \geq 1)$
+
+We observe that
+\[
+P(A|B)=\frac{P(A\cap B)}{P(B)}
+\]
+and as $X \geq a \subset X \geq b$ the intersection of those two events is just $X\geq a$.
+Thus we can express the conditional probability as:
+\[
+P(X\geq a| X\geq b) = \frac{P(X \geq a)}{P(X\geq b)}
+\]
+Multiplying both sides with $P(X\geq b)$ gives us the chain rule of conditional probability as expected.
+From this we see that we cannot improve the success probability of a single channel by splitting the amout into sever parts which all have to go through this channel.
+This property is expected.
+
+We can now study the question wether it is more likeli to be able to deliver the full amount $a$ in a channel knowing that $a$ satoshi was already delivered or to be able to deliver $a-1$ initially.
+In the case of a uniformly distributed channel balance of a channel with capacity $c-1$ we can proof the following Lemma:
+
+\begin{lemma}
+  Let $P$ be a uniform distribution for a channel of capacity $c-1$ an $X$ the random variable encoding the balance such that $P$ is defined by $P(X=x)=\frac{1}{c} \forall x \in \{0,\dots,c-1\}$. Let $a$ be between $2$ and $c-1$
+  Then $P(X\geq a-1) \geq P(X \geq a| X \geq 1)$
+\end{lemma}
+\begin{proof}
+  We shot the property by showing that the difference of the two terms is larger than $0$.
+
+  \begin{equation*}
+  \begin{aligned}
+  & P(X\geq a-1) - P(X\geq a | X\geq 1) \\
+  & = \frac{c - (a-1)}{c} - \frac{\frac{c-a}{c}}{\frac{c-1}{c}} \\ 
+  & = \frac{c - a + 1}{c} - \frac{c-a}{c-1} \\
+  & = \frac{(c-1)(c-a+1)}{c(c-1)} - \frac{c(c-a)}{c(c-1)} \\
+  & = \frac{c^2 -ca +c -c +a -1}{c(c-1)} - \frac{c^2-ca}{c(c-1)} \\
+  & = \frac{c^2 -ca +c -c +a -1-c^2+ca}{c(c-1)} \\
+  & = \frac{a -1}{c(c-1)} \\
+  & \geq 0
+  \end{aligned}
+  \end{equation*}
+\end{proof}
+\todo[inline]{RP: I am confused if this is true for arbitrary probability functions. I tried to proof this and I have some term but it is still weired to me.}
+
+With the help of the lemma we can proof that the most likely path to deliver $1$ satoshi needs to be part of the most likeli multipart split.
+\todo[inline]{RP: Since I don't have controll over my notation for multipaths yet I will demonstrate the argument only for the case where we can choose between two channels but the argument is applicable in a wider context}
+
+\begin{theorem}
+  Let $m$ be the channel that maximizes $P_m(X\geq 1)$ between two nodes. Assume more channel between these nodes exist. The split of the amount $a=\sum_{i=1}^ka_i$ that maximizes the success probability $p(a_1,\dots,a_k)=\prod{i=1}^kP_i(X\geq a_i)$ has to send at least $1$ satoshi along channel $m$. (Currently under the assumption that distributions are uniform)
+\end{theorem}
+
+\begin{proof}
+  Let us assume the split does not include $m$.
+  We show that we can increase the probability when we shift one satoshi to channel $m$ which would be a contradiction to the maximality.
+  We select an arbitrary channel $c$ from the maximal split along which $a_c$ is sent.
+  \begin{equation*}
+    \begin{aligned}
+      P_c(X\geq a_c) & = P_c(X \geq a_c | X \geq 1)\cdot P_c(X\geq 1) \\
+      & \leq P_c(X \geq a_c | X \geq 1)\cdot P_m(X\geq 1) \\
+      & \leq P_c(X \geq a_c - 1 ) \cdot P_m(X\geq 1)
+    \end{aligned}  
+  \end{equation*}
+  The first equation was chain rule of probability.
+  The first inequality was because by assumption of the theorem $P_m(X\geq 1)$ is the most likeli channel to deliver 1 satoshi.
+  The second inequality comes from the lemma.
+  However the last term encodes a split that includes sending $1$ satoshi along channel $m$.
+  This is a contradiction to the assumption that the split with the maximal success probability could be found without sending at least one satoshi along channel $m$.
+\end{proof}
+  
+\todo[inline]{I believe using the chain rule and having controll over notation the above argument can be iteratively applied to proof the correctness of the $+1$ algorithm of finding the best split by always adding one satoshi to the most likeli graph}
+
+
+\section{Payment planning and execution}
+\begin{itemize}
+\item implementing and describing the general case (n-split) on actual lightning network data that is based on solving the optimization problem with lagrange multipliers. (shall we use an arbitrary probability distribution as a prior or shall we use uniform distributions? I guess to describe the problem we can use arbitrary distributions and for the solution we can compute this with uniform priors.)
+\item Understand if the solution to the non linear system of equation that arises from the lagrange multipliers can efficiently be approximated well enough (for example taylor approximation!) and quantify the loss in effectiveness in comparison to gain in computational complexity.
+\item define a proper experimental setup strategy (probably using proper sampling of payment pairs and amounts)
+\item solve the candidate selection process (e.g. take highest likely path with full amount reduce capacities by the amount and select next probable path (this allows for non disjoint paths) or remove that path completely (this allows for disjoint paths)) both strategies are obviously only an approximation to path selection. But it is infeasble to take \textit{all} paths and solve the problem on subsets.\footnote{maybe neglect this until next paper it seems to me a different modelling approach of the problem would have to be taken. not sure if we can solve this and it seems all the other stuff is already pretty dense}
+\item adopt the problem to non disjoint problems
+\item define the payment planning and execution algorithm. I currently have the following in mind:
+  \begin{enumerate}
+  \item generate $n$ candidate paths and rank them by likelihood (with one of the two mentioned strategies and the dijkstra search on the minus-log-prob weighted graph arising from previous research).
+  \item solve the optimal split for the top $k$ paths according to the exact math (or approximation if feasable).
+  \item concurrently make attempts of the $k$ split with the highest overall success probability.
+  \item after the first failed attempt wait a timeout to collect more failures and solve the problem for the residual amount by first updating the probabilities via the learnt information and then repeat from step one. (In later repitation include any failed onions from all previous rounds)
+  \item do this for $x$ rounds or until the graph does produce splits with sufficiently high probabilities anymore. 
+  \end{enumerate}
+\item Test how quickly (after how many rounds) we know for sure that we cannot find a path! or at least that the success probability drops to a certain amount! this can be the basis for an adaptive strategy for the number of rounds. e.g. we can say that we do not want to try if the success probabilty goes below $p$ or we don't do more rounds. In this way we can very precisly define service level agreements.
+  \item include the optimal local splitting strategy to optimize channels towards the gini coefficient of the imbalance paper \cite{Pickhardt2019}. (while this will decrease the success probability it might over all improve the network as channels become normally distributed) we can simulate the effect of that change a) on a local level but also b) if everyone implements this!
+\end{itemize}
+
+\section{Some proofs and observations}
+
+As path success probabilities are just the product of channel success probabilities of the channels along this path we can use the chain rule at every channel to also see that the probability of a single path can never be improved by splitting the amount into several parts which all have to go over the same path.
+
+Let us now look at $G_1$ the graph with log probabilities for sending a single token and at $G_a$ the graph with log probabilities for sending an amount $a$.
+We claim that the $k$-multipart $\pi_{s,d}^k$ that maximizes $p_{s,d}(a_1,\dots,a_k)$ for the transfer of $a=\sum_{i=1}^ka_i$ contains the shortest path between $s$ and $d$ in $G_1$
+We proof this by contradiction.
+Let us assume $\pi_{s,d}^1$ is the shortest path with $p_{s,d}^1(1)=\prod_{(v,u)\pi_(s,d)^1}P_{v,u}(X \geq 1)$ is maximal on $G_1$
+
+\section{Example using uniform distributions}
 for a payment channel with capacity $c_{v,u}=c_{u,v}\in\mathbb{N}$ we can easily compute the channel succes probability as:
 \[
 P_{v,u}(X\geq a)=\frac{c_{v,u}+1 - a}{c_{v,u}+1}
@@ -147,30 +274,13 @@ Nevertheless we depicted the results for some concrete values of $a$ in figure \
 \section{Results}
 
 \section{next steps}
-\begin{itemize}
-\item implementing and describing the general case (n-split) on actual lightning network data that is based on solving the optimization problem with lagrange multipliers. (shall we use an arbitrary probability distribution as a prior or shall we use uniform distributions? I guess to describe the problem we can use arbitrary distributions and for the solution we can compute this with uniform priors.)
-\item Understand if the solution to the non linear system of equation that arises from the lagrange multipliers can efficiently be approximated well enough (for example taylor approximation!) and quantify the loss in effectiveness in comparison to gain in computational complexity.
-\item define a proper experimental setup strategy (probably using proper sampling of payment pairs and amounts)
-\item solve the candidate selection process (e.g. take highest likely path with full amount reduce capacities by the amount and select next probable path (this allows for non disjoint paths) or remove that path completely (this allows for disjoint paths)) both strategies are obviously only an approximation to path selection. But it is infeasble to take \textit{all} paths and solve the problem on subsets.\footnote{maybe neglect this until next paper it seems to me a different modelling approach of the problem would have to be taken. not sure if we can solve this and it seems all the other stuff is already pretty dense}
-\item adopt the problem to non disjoint problems
-\item define the payment planning and execution algorithm. I currently have the following in mind:
-  \begin{enumerate}
-  \item generate $n$ candidate paths and rank them by likelihood (with one of the two mentioned strategies and the dijkstra search on the minus-log-prob weighted graph arising from previous research).
-  \item solve the optimal split for the top $k$ paths according to the exact math (or approximation if feasable).
-  \item concurrently make attempts of the $k$ split with the highest overall success probability.
-  \item after the first failed attempt wait a timeout to collect more failures and solve the problem for the residual amount by first updating the probabilities via the learnt information and then repeat from step one. (In later repitation include any failed onions from all previous rounds)
-  \item do this for $x$ rounds or until the graph does produce splits with sufficiently high probabilities anymore. 
-  \end{enumerate}
-\item Test how quickly (after how many rounds) we know for sure that we cannot find a path! or at least that the success probability drops to a certain amount! this can be the basis for an adaptive strategy for the number of rounds. e.g. we can say that we do not want to try if the success probabilty goes below $p$ or we don't do more rounds. In this way we can very precisly define service level agreements.
-  \item include the optimal local splitting strategy to optimize channels towards the gini coefficient of the imbalance paper \cite{Pickhardt2019}. (while this will decrease the success probability it might over all improve the network as channels become normally distributed) we can simulate the effect of that change a) on a local level but also b) if everyone implements this!
-\end{itemize}
 
 \subsection{newer thoughts after running examples}
 
 \begin{enumerate}
 \item Maybe it is possible to get rid of candidate path generation.
 We could use a very large $k$-split over \textit{all} paths and adopt the optimization problem to not allow negative amounts or amounts larger than channel or the amount to send.
-This could yield a solution of the $k$ split in which $l\leg k$ variables are zero in the optimal solution as the solution is on the border of the constrained problem.
+This could yield a solution of the $k$ split in which $l\leq k$ variables are zero in the optimal solution as the solution is on the border of the constrained problem.
 \item With regard to splitting strategies we could write down probabilities for equidistant split, the optimial split and the start split before the optimization problem (which is proportional to the smallest channel across each path).
 \item I think it was mentioned before but especially when following through the first idea we have to account for non disjoint paths.
 \end{enumerate}
