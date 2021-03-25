@@ -173,6 +173,79 @@ With the help of the lemma we can proof that the most likely path to deliver $1$
   
 \todo[inline]{I believe using the chain rule and having controll over notation the above argument can be iteratively applied to proof the correctness of the $+1$ algorithm of finding the best split by always adding one satoshi to the most likeli graph}
 
+\section{Flow Approach}
+Let $G = (V,E)$ be a graph and $c: E \longrightarrow \mathbb{N}$ a capacity function.
+An $a$-flow from $s$ to $d$ $f^a$ is a function $f^a: E \longrightarrow \mathbb{N}$ such that for every edege $(u,v)$ the value $f^a_{u,v}:=f^a(u,v) \leq c_{u,v} := c(u,v)$.\footnote{actually we have to have $f_{u,v}+f_{v,u} \leq c_{u,v} = c_{v,u}$ Though reallity is even more subtle since capacities can change during execution.}
+Let us assume that foreach edge $e = (u,v)\in E$ we have the space $\Omega_e$ as the set of all commitment transactions and we have a probability function $P_e: \Omega \longrightarrow [0,1]$ and a random variable $X: 2^\Omega \longrightarrow [0,\dots,c_{u,v})$.
+We can then compute the probability of the flow as:
+
+\[
+p(f^a) = \prod_{(u,v)\in E}P_{u,v}(X\geq f^a_{u,v})  
+\]
+For a given flow $f_a$ we study the residual network $R$.
+It constist of the same graph $G$ together with an additional residual weighting function $r:E\longrightarrow \mathbb{R}_0^+$ via: 
+\[
+r_{u,v} = r(u,v) = P_{u,v}(X\geq f^a_{u,v}+1 | X \geq f^a_{u,v})
+\]
+A path $\pi$ in $R$ can assigned a probability similarly to the probability of the flow as:
+\[
+\prod_{(u,v) \in \pi} P_{u,v}(X\geq f^a_{u,v}+1 | X \geq f^a_{u,v})
+\]
+
+\begin{theorem}
+  Let $f^a$ be an $a$-flow with maximal probability\footnote{The flow with maximal probability does not need to be unique. consider a graph with two disjoint paths from $s$ to $d$ but the paths have the same length and capacities. The $1$-flow selecting either path has the same maximal probability.}.
+  Let $\pi$ be a path on the residual graph $R$ with maximal probability.
+  The $(a+1)$ flow that is created via $f^{a+1}_{u,v}:= f^a_{u,v} + 1 \forall (u,v) \in \pi$ and $f^(a+1)_{u,v} := f^a_{u,v} \forall (u,v) \not\in\pi$ is the $a+1$ flow with maximum probability that extends $f^a$
+\end{theorem}
+
+\begin{proof}
+  Assume $f^{a+1}$ is a maximal extension of $f^a$ along the path $\rho$ that uses at least one edge $e = (u,v) \in\rho : e \not\in\pi$. In particular we have $f^{a+1}_{u,v}=f^a_{u,v} + 1 \forall (u,v)\in\rho$. Then:
+  \[
+  \begin{aligned}
+    p(f^{a+1}) & = \prod_{(u,v) \in E}P_{u,v}(X \geq f^{a+1}_{u,v})\\
+    & = \left(\prod_{(u,v)\in\rho} P_{u,v}(X \geq f^{a}_{u,v} + 1)\right)\left(\prod_{(u,v)\not\in\rho} P_{u,v}(X \geq f^{a}_{u,v})\right) \\
+    & = \left(\prod_{(u,v)\in\rho} P_{u,v}(X \geq f^{a}_{u,v} + 1 | X \geq f^a_{u,v})\cdot P_{u,v}(X\geq f^a_{u,v})\right) \\
+    & \left(\prod_{(u,v)\not\in\rho} P_{u,v}(X \geq f^{a}_{u,v})\right)
+    & = \left(\prod_{u,v\in E}P_{u,v}(X \geq f^{a}_{u,v})\right)\cdot\left(\prod_{(u,v)\in\rho} P_{u,v}(X \geq f^{a}_{u,v} + 1 | X \geq f^a_{u,v})\right) \\
+    & = \left(\prod_{u,v\in E}P_{u,v}(X \geq f^{a}_{u,v})\right)\\
+    & \cdot \left(\prod_{(u,v)\in\rho} P_{u,v}(X \geq f^{a}_{u,v} + 1 | X \geq f^a_{u,v})\right) \\
+    & \leq \left(\prod_{u,v\in E}P_{u,v}(X \geq f^{a}_{u,v})\right) \\
+    & \cdot\left(\prod_{(u,v)\in\pi} P_{u,v}(X \geq f^{a}_{u,v} + 1 | X \geq f^a_{u,v})\right)
+  \end{aligned}
+  \]
+  This is a contradiction to $f^{a+1}$ being maximal and not going via $\pi$ as we showed we can improve the likelihood extinding the flow via $\pi$
+\end{proof}
+
+\todo[inline]{RP: The assumptions in this proof are two strong as it is not clear that the maximal a+1 flow needs to contain a maximal a flow. also it is not clear what happens when a flow for extension had to be chosen because it was not unique.}
+
+To understand this we have a look at the example in figure \ref{fig:counterexample}
+\begin{figure}[htpb]
+  \center
+  \includegraphics[width=0.45\textwidth]{img/counterexample.jpg}
+  \caption{The maximal $2$-flow with maximal probability is not an extension of the $1$-flow from  $s$ to $d$ with maximal probability.}
+  \label{fig:counterexample}
+\end{figure}
+Assuming uniform probability distributions we compute the following probabilities for the $1$ flows:
+\[
+\begin{aligned}
+p([s,A,B,d]) = & \frac{2}{3}\cdot\frac{2}{3}\cdot\frac{4}{5}=\frac{16}{45}& =0.3555\dots \\ 
+p([s,X,Y,d]) = & \frac{1}{2}\cdot\frac{7}{8}\cdot\frac{4}{5}=\frac{28}{80}& =0.35 \\
+p([s,X,B,d]) = & \frac{1}{2}\cdot\frac{9}{10}\cdot\frac{4}{5}=\frac{36}{100}& =0.36 \\
+\end{aligned}
+\]
+
+indicating that $s,X,B,d$ is the maximal $1$-flow.
+However the residual network sets the probability of extending the flow via $(s,X)$ to zero.
+One can easily see that on the residual network the path $s,A,B,d$ has maximal likelihood.
+The resulting two $f^2$ flow has the following probability:
+\[
+p(f^2) = \frac{1}{2}\cdot \frac{9}{10}\cdot \frac{2}{3}\cdot \frac{2}{3}\cdot \frac{3}{5} = \frac{3}{25}=0.12
+\]
+
+However if we look at the $2$-flow $g^2$ that sends $1$ satoshi along $s,A,B,d$ and $1$ along $s,X,Y,d$ we get $p(g^2)=\frac{16\cdot 28}{45\cdot 80} = 0.1244\dots$ 
+wich is also the maximal $2$ flow in this graph but did not contain the maximal $1$-flow
+
+\todo[inline]{RP: I think we can fix the probability of the residual graph by realizing that if $f^a_{u,v}>0$ then the residual weight flowing in the other direction $r_{v,u}$ can be set to $\frac{1}{P(X\geq f^a_{u,v}| X \geq f^a_{u,v}-1)}$ which effectivly encodes the permission to flow back on an used edge and assignes back the probability. While this trick finds the optimal $2$-flow from the optimal $1$-flow. I am not certain yet that this trick is sufficient to proof correctness. I tried to set the weight to of the residual flow in the back direction to $1$ but that did not work. Note that our definition is always larger than $1$ resulting in negative weights for dijkstra in the case of negative logs of the weights of the residual graph. (I am pretty certain that we can't have negative cycles by construction which would destroy any path finding algorithm). Also I am sure that this approach is very similar to the concept of augmenting paths from Ford Fulkerson algorithm.}
 
 \section{Payment planning and execution}
 \begin{itemize}
