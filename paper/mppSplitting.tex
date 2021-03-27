@@ -247,6 +247,59 @@ wich is also the maximal $2$ flow in this graph but did not contain the maximal 
 
 \todo[inline]{RP: I think we can fix the probability of the residual graph by realizing that if $f^a_{u,v}>0$ then the residual weight flowing in the other direction $r_{v,u}$ can be set to $\frac{1}{P(X\geq f^a_{u,v}| X \geq f^a_{u,v}-1)}$ which effectivly encodes the permission to flow back on an used edge and assignes back the probability. While this trick finds the optimal $2$-flow from the optimal $1$-flow. I am not certain yet that this trick is sufficient to proof correctness. I tried to set the weight to of the residual flow in the back direction to $1$ but that did not work. Note that our definition is always larger than $1$ resulting in negative weights for dijkstra in the case of negative logs of the weights of the residual graph. (I am pretty certain that we can't have negative cycles by construction which would destroy any path finding algorithm). Also I am sure that this approach is very similar to the concept of augmenting paths from Ford Fulkerson algorithm.}
 
+\begin{lemma}
+  Let $f:E\longrightarrow \mathbb{R}_{\geq 0}$ be an $a$-flow.
+  If $p(f) \geq p(f')$ for any other $a$-flow $f'$.
+  Then the residual net $R_f$ has no cycle $\zeta$ with $\displaystyle\prod_{(u,v)\in\zeta}r(u,v) \geq 1$.
+\end{lemma}
+
+\begin{proof}
+  We proof this by contradicion.
+  We thus assume for a maximal probable flow $f$ there is a cycle $\zeta$ in the residual network $R_f$ such that $\displaystyle\prod_{(u,v)\in\zeta}r(u,v) \geq 1$.
+  We interpret the cycle $\zeta$ as a set of edges which can be split into a disjoint union $\zeta = \zeta_p \mathbin{\dot{\cup}} \zeta_n$ where
+  \[
+  \zeta_n:=\{(u,v) \in\zeta | r(u,v)=\frac{1}{P_{u,v}(X\geq f_{u,v}| X \geq f_{u,v}-1)}\}
+  \]
+  and
+  \[
+  \zeta_p:=\{(u,v) \in\zeta | r(u,v)=P_{u,v}(X\geq f_{u,v}+1| X \geq f_{u,v})\}
+  \]
+  We then look at the flow $f'$ which we construct as
+
+  \[
+f'_{u,v} =
+  \begin{cases}
+    f_{u,v} & (u,v)\not\in\zeta \\
+    f_{u,v} - 1 & (u,v)\in\zeta_n \\
+    f_{u,v} + 1 & (u,v)\in\zeta_p
+  \end{cases}
+  \]
+
+  Let us study $\frac{p(f')}{p(f)}$. Due to the definition all the factors coming from edges that are not in $\zeta$ take the same value in $p(f)$ and $p(f')$ and can thus be cancled.
+
+  \[
+  \begin{aligned}
+    \frac{p(f')}{p(f)} & = \prod_{(u,v)\in\zeta_n}\frac{P(X\geq f_{u,v}-1)}{P(X\geq f_{u,v})}\cdot\prod_{(u,v)\in\zeta_p}\frac{P(X\geq f_{u,v}+1)}{P(X\geq f_{u,v})} \\
+    & = \prod_{(u,v)\in\zeta_n}\frac{1}{P(X\geq f_{u,v} | \geq f_{u,v} -1)} \\
+    & \cdot\prod_{(u,v)\in\zeta_p}P(X\geq f_{u,v}+1|X\geq f_{u,v}) \\
+    & = \prod_{(u,v)\in\zeta}r(u,v) \\
+    & \geq  1
+    \end{aligned}
+  \]
+  This implies that $p(f') \geq p(f)$ which is a contradiction to $p(f)$ being maximal.
+  Thus such a cycle could not have existed.
+\end{proof}
+
+\begin{lemma}
+  Let $f:E\longrightarrow \mathbb{R}_{\geq 0}$ be an $a$-flow with Residual network $R_f$.
+  If $R_f$ contains no cycle $\zeta$ with $\prod_{(u,v)\in\zeta}r(u,v)$ then there is no $a$-flow $f'$ such that $p(f')\geq p(f)$.
+\end{lemma}
+
+\begin{proof}
+
+\end{proof}
+
+
 \section{Payment planning and execution}
 \begin{itemize}
 \item implementing and describing the general case (n-split) on actual lightning network data that is based on solving the optimization problem with lagrange multipliers. (shall we use an arbitrary probability distribution as a prior or shall we use uniform distributions? I guess to describe the problem we can use arbitrary distributions and for the solution we can compute this with uniform priors.)
