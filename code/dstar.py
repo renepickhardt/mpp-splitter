@@ -148,8 +148,7 @@ class Algo:
                     if flow + amt > cap:
                         lprob = INFTY
                     else:
-                        prob = (cap + 1 - flow - amt) / (cap - flow + 1)
-                        lprob = -1*log(prob)
+                        lprob = -log((cap + 1 - flow - amt) / (cap - flow + 1))
                     assert(n.residual[i] >= lprob)
                     n.residual[i] = lprob
                     print(lprob, n, p, "rule1")
@@ -158,8 +157,7 @@ class Algo:
                     # could also remove it and add in the opposite
                     # direction
                     if amt < flow:
-                        prob = (cap + 1 - flow + amt) / (cap + 1 - flow)
-                        lprob = -1*log(prob)
+                        lprob = -log((cap + 1 - flow + amt) / (cap + 1 - flow))
                     else:
                         lprob = INFTY
                     assert(n.peers[i].residual[rev_id] >= lprob)
@@ -167,17 +165,18 @@ class Algo:
                     print(lprob, p, n, "rule2")
 
                 elif invflow > 0:
-                    if invflow + amt <= invcap:
-                        lprob = -log((invcap - invflow + 1 - amt)/(invcap + 1 - invflow))
-                    else:
+                    # We could add the amount in the opposite direction
+                    if invflow + amt > invcap:
                         lprob = INFTY
+                    else:
+                        lprob = -log((invcap + 1 - invflow - amt) / (invcap - invflow + 1))
                     assert(n.peers[i].residual[rev_id] >= lprob)
                     n.peers[i].residual[rev_id] = lprob
                     print(lprob, p, n, "rule3")
 
-                    if amt <= invflow:
+                    if amt < invflow:
                         # 1/ P(X>=f | X >= f - amt) = (c+1-f)/(c+1-f+a)
-                        lprob = -log((invcap+1-invflow+amt)/(invcap+1-invflow))
+                        lprob = -log((invcap + 1 - invflow + amt)/(invcap + 1 - invflow))
                     else:
                         lprob = INFTY
                     assert(n.residual[i] > lprob)
