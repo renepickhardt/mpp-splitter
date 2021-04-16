@@ -81,18 +81,27 @@ def test_ln_topo():
 
         for c in listchannels:
             node_ids.append(c['source'])
-            g.add_edge(c['source'], c['destination'], c['satoshis']*1000)
+            if c['source'] > c['destination']:
+                continue  # only add one direction, the other is going
+                          # to be added by add_edge
+            g.add_edge(c['source'], c['destination'], float(c['satoshis']/10000))
 
     # Pick two nodes
-    src = node_ids[100]
-    dst = node_ids[1337]
-    print(f"Source={src} destination={dst}")
+    src = '03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f'
+    dst = '02ad6fb8d693dc1e4569bcedefadf5f72a931ae027dc0f0c544b34c1c6f3b9a02b'
+
+    print(f"source={src} destination={dst}")
     a = Algo(g, src, dst, amt, amt/rounds)
     for i in range(rounds):
         print(f"Iteration {i}/{rounds}")
         a.checked_compute_residual()
         flow = a.incflow()
-        print(flow)
+
+        res = 1
+        for h in flow:
+            res *= h[3]
+
+        print(flow, res)
         a.applyflow(flow)
 
     print(listchannels[0])

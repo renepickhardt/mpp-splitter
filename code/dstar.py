@@ -266,7 +266,7 @@ class Algo:
         c = src
         flow = []
         while c.predecessor is not None:
-            flow.append((self.stepsize, c, c.predecessor))
+            flow.append((self.stepsize, c, c.predecessor, 2**(-c.logprob)))
             c = c.predecessor
 
         return flow
