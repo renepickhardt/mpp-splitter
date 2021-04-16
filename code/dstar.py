@@ -107,9 +107,92 @@ class Algo:
     def __init__(self, graph: Graph, source, dest, amt: int, stepsize: int = 1) -> None:
         self.graph = graph
         self.olist: List[Node] = []
-        self.source = source
-        self.dest = dest
+        self.source = self.graph.get_node(source)
+        self.dest = self.graph.get_node(dest)
         self.stepsize = stepsize
+
+    def _compute_residual_edge(self, n, i, p):
+        amt = self.stepsize
+
+        # Classical reach-around...
+        rev_id = n.invresidual[i]
+        assert(n == n.peers[i].peers[rev_id])
+
+        cap = n.capacities[i]
+        invcap = n.peers[i].capacities[rev_id]
+
+        flow = n.flow[i]
+        invflow = n.peers[i].flow[rev_id]
+
+        diff = min(flow, invflow)
+        if diff > 0:
+            n.flow[i] -= diff
+            n.peers[i].flow[rev_id] -= diff
+            invflow -= diff
+            flow -= diff
+
+        # No flow at all yet, just compute the base case
+        elif flow == 0 and invflow == 0:
+            lprob = -log((cap + 1 - amt)/(cap + 1))
+            assert(n.residual[i] >= lprob)
+            n.residual[i] = lprob
+
+        elif flow > 0:
+            # We could add the amount in this direction.
+            if flow + amt > cap:
+                lprob = INFTY
+            else:
+                lprob = -log((cap + 1 - flow - amt) / (cap - flow + 1))
+            assert(n.residual[i] >= lprob)
+            n.residual[i] = lprob
+
+            # If we already have a flow in this direction we
+            # could also remove it and add in the opposite
+            # direction
+            if amt < flow:
+                lprob = -log((cap + 1 - flow + amt) / (cap + 1 - flow))
+            else:
+                lprob = INFTY
+            assert(n.peers[i].residual[rev_id] >= lprob)
+            n.peers[i].residual[rev_id] = lprob
+
+        elif invflow > 0:
+            return
+            # We could add the amount in the opposite direction
+            if invflow + amt > invcap:
+                lprob = INFTY
+            else:
+                lprob = -log((invcap + 1 - invflow - amt) / (invcap - invflow + 1))
+            assert(n.peers[i].residual[rev_id] >= lprob)
+            n.peers[i].residual[rev_id] = lprob
+
+            if amt < invflow:
+                # 1/ P(X>=f | X >= f - amt) = (c+1-f)/(c+1-f+a)
+                lprob = -log((invcap + 1 - invflow + amt)/(invcap + 1 - invflow))
+            else:
+                lprob = INFTY
+            assert(n.residual[i] >= lprob)
+            n.residual[i] = lprob
+
+    def checked_compute_residual(self):
+        """Compute residual graph, but check how much changed.
+        """
+        prev = [None] * len(self.graph.nodes)
+        for j, n in enumerate(self.graph.nodes):
+            prev[j] = [r for r in n.residual]
+
+        res = self.compute_residual()
+
+        diff = 0
+        count = 0
+        for j, n in enumerate(self.graph.nodes):
+            for i, r in enumerate(n.residual):
+                count += 1
+                if prev[j][i] != r:
+                    diff += 1
+
+        print(f"Residual check: {diff}/{count} changed since last round")
+        return res
 
     def compute_residual(self):
         """Compute the residual graph based on the estimated capacities and
@@ -118,85 +201,25 @@ class Algo:
 
         """
         # Reset:
-        for n in self.graph.nodes:
+        prev = []
+        for j, n in enumerate(self.graph.nodes):
+            prev.append([])
             for i, p in enumerate(n.peers):
                 n.residual[i] = INFTY
+                prev[j].append(n.residual[i])
 
         amt = self.stepsize
-        for n in self.graph.nodes:
+        for j, n in enumerate(self.graph.nodes):
             for i, p in enumerate(n.peers):
-                # Classical reach-around...
-                rev_id = n.invresidual[i]
-                assert(n == n.peers[i].peers[rev_id])
-
-                cap = n.capacities[i]
-                invcap = n.peers[i].capacities[rev_id]
-
-                flow = n.flow[i]
-                invflow = n.peers[i].flow[rev_id]
-
-                diff = min(flow, invflow)
-                if diff > 0:
-                    print("Flow cancellation", n, p, flow, invflow)
-                    n.flow[i] -= diff
-                    n.peers[i].flow[rev_id] -= diff
-                    invflow -= diff
-                    flow -= diff
-
-                # No flow at all yet, just compute the base case
-                elif flow == 0 and invflow == 0:
-                    lprob = -log((cap + 1 - amt)/(cap + 1))
-                    assert(n.residual[i] >= lprob)
-                    n.residual[i] = lprob
-                    print(lprob, n, p, "rule0")
-
-                elif flow > 0:
-                    # We could add the amount in this direction.
-                    if flow + amt > cap:
-                        lprob = INFTY
-                    else:
-                        lprob = -log((cap + 1 - flow - amt) / (cap - flow + 1))
-                    assert(n.residual[i] >= lprob)
-                    n.residual[i] = lprob
-                    print(lprob, n, p, "rule1")
-
-                    # If we already have a flow in this direction we
-                    # could also remove it and add in the opposite
-                    # direction
-                    if amt < flow:
-                        lprob = -log((cap + 1 - flow + amt) / (cap + 1 - flow))
-                    else:
-                        lprob = INFTY
-                    assert(n.peers[i].residual[rev_id] >= lprob)
-                    n.peers[i].residual[rev_id] = lprob
-                    print(lprob, p, n, "rule2")
-
-                elif invflow > 0:
-                    # We could add the amount in the opposite direction
-                    if invflow + amt > invcap:
-                        lprob = INFTY
-                    else:
-                        lprob = -log((invcap + 1 - invflow - amt) / (invcap - invflow + 1))
-                    assert(n.peers[i].residual[rev_id] >= lprob)
-                    n.peers[i].residual[rev_id] = lprob
-                    print(lprob, p, n, "rule3")
-
-                    if amt < invflow:
-                        # 1/ P(X>=f | X >= f - amt) = (c+1-f)/(c+1-f+a)
-                        lprob = -log((invcap + 1 - invflow + amt)/(invcap + 1 - invflow))
-                    else:
-                        lprob = INFTY
-                    assert(n.residual[i] > lprob)
-                    n.residual[i] = lprob
-                    print(lprob, n, p, "rule4")
+                self._compute_residual_edge(n, i, p)
 
 
 
     def incflow(self):
         """Compute an incremental flow using stepsize and the residual graph.
         """
-        dest = self.graph.get_node(self.dest)
-        src = self.graph.get_node(self.source)
+        dest = self.dest
+        src = self.source
         dest.logprob = 0
         dest.predecessor = None
         olist = [dest]
@@ -215,7 +238,7 @@ class Algo:
         c = src
         flow = []
         while c.predecessor is not None:
-            flow.append((self.stepsize, c.predecessor, c))
+            flow.append((self.stepsize, c, c.predecessor))
             c = c.predecessor
 
         return flow
