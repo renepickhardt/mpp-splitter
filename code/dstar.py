@@ -102,6 +102,15 @@ class Graph:
                 g.add_edge(n.id, p.id, flow=n.flow[i], residual=n.residual[i])
         return g
 
+    def print_graph(self):
+        print("digraph {")
+        for n in self.nodes:
+            print(f'\tn{n.idx} [label="{n.id}"]')
+        for n in self.nodes:
+            for i, p in enumerate(n.peers):
+                print(f'\tn{n.idx} -> n{p.idx} [residual="{n.residual[i]}", capacity="{n.capacities[i]}", flow="{n.flow[i]}"]')
+        print("}")
+
 
 class Algo:
     def __init__(self, graph: Graph, source, dest, amt: int, stepsize: int = 1) -> None:
