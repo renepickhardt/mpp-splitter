@@ -47,6 +47,29 @@ def test_dijkstra(benchmark):
     ]
     assert f == expected
 
+def test_dijkstra_correct():
+    g = small_graph()
+    a = Algo(g, "S", "D", 2, 1)
+    a.checked_compute_residual()
+    flow = a.incflow()
+    print(flow)
+    expected = [(1, "S", "X"), (1, "X", "B"), (1, "B", "D")]
+    f = [(f[0], f[1].id, f[2].id) for f in flow]
+    assert f == expected
+
+    a.applyflow(flow)
+    a.checked_compute_residual()
+    flow = a.incflow()
+    print(flow)
+    f = [(f[0], f[1].id, f[2].id) for f in flow]
+    expected = [
+        (1, "S", "A"),
+        (1, "A", "B"),
+        (1, "B", "X"),
+        (1, "X", "Y"),
+        (1, "Y", "D"),
+    ]
+    assert f == expected
 
 def test_ln_topo():
     g = Graph()
