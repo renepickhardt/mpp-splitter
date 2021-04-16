@@ -28,6 +28,8 @@ class Node:
                          # payment. Used to bias towards the source
                          # when starting from the destination.
 
+        self.idx = None
+
     def add_peer(self, peer: "Node", capacity: float) -> int:
         """Returns the position of the peer in the list.
         """
@@ -56,17 +58,22 @@ class Node:
 class Graph:
     def __init__(self):
         self.nodes = []
+        self.node_index = {}
 
     def add_node(self, id):
         n = Node(id)
+        idx = len(self.nodes)
+        n.idx = idx
         self.nodes.append(n)
+        self.node_index[id] = idx
         return n
 
     def get_node(self, id):
-        for n in self.nodes:
-            if n.id == id:
-                return n
-        return None
+        idx = self.node_index.get(id, None)
+        if idx is None:
+            return None
+        else:
+            return self.nodes[idx]
 
     def add_edge(self, id1, id2, capacity):
         n1 = self.get_node(id1)
