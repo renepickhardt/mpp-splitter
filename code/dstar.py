@@ -165,7 +165,7 @@ class Algo:
             # If we already have a flow in this direction we
             # could also remove it and add in the opposite
             # direction
-            if amt < flow:
+            if amt <= flow:
                 lprob = -log((cap + 1 - flow + amt) / (cap + 1 - flow))
             else:
                 lprob = INFTY
@@ -173,7 +173,6 @@ class Algo:
             n.peers[i].residual[rev_id] = lprob
 
         elif invflow > 0:
-            return
             # We could add the amount in the opposite direction
             if invflow + amt > invcap:
                 lprob = INFTY
@@ -182,7 +181,7 @@ class Algo:
             assert(n.peers[i].residual[rev_id] >= lprob)
             n.peers[i].residual[rev_id] = lprob
 
-            if amt < invflow:
+            if amt <= invflow:
                 # 1/ P(X>=f | X >= f - amt) = (c+1-f)/(c+1-f+a)
                 lprob = -log((invcap + 1 - invflow + amt)/(invcap + 1 - invflow))
             else:
