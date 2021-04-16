@@ -123,6 +123,11 @@ class Algo:
         self.stepsize = stepsize
 
     def _compute_residual_edge(self, n, i, p):
+        """Compute the residual flow for a single edge. The edge considered is
+        the outgoing edge from node `n` to `p`, with index `i`
+        (pointing into the `n.peers` list).
+
+        """
         amt = self.stepsize
 
         # Classical reach-around...
