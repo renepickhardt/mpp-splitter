@@ -262,39 +262,3 @@ class Algo:
             # TODO Update the residual a -> b and b -> a
         for n in self.graph.nodes:
             n.logprob = INFTY
-
-
-if __name__ == "__main__":
-    import pylab as plt
-
-    g = Graph()
-    g.add_edge("S", "A", capacity=2)
-    g.add_edge("S", "X", capacity=1)
-    g.add_edge("A", "B", capacity=2)
-    g.add_edge("X", "B", capacity=9)
-    g.add_edge("X", "Y", capacity=7)
-    g.add_edge("B", "D", capacity=4)
-    g.add_edge("Y", "D", capacity=4)
-
-    g.print()
-    print("Computing residual")
-    a = Algo(g, source='S', dest='D', amt=2, stepsize=1)
-    a.compute_residual()
-    g.print()
-
-    flow = a.incflow()
-    a.applyflow(flow)
-    flow = [(f[0], f[1].id, f[2].id) for f in flow]
-    print(flow)
-    a.compute_residual()
-    g.print()
-
-    flow = a.incflow()
-    a.applyflow(flow)
-    flow = [(f[0], f[1].id, f[2].id) for f in flow]
-    print(flow)
-
-    nxg = g.to_nx()
-    nx.draw(nxg, with_labels=True)
-    plt.axis('off')
-    plt.savefig('labels.png')
