@@ -235,8 +235,21 @@ class Algo:
         dest.predecessor = None
         olist = [dest]
 
+        visited = [0] * len(self.graph.nodes)
+
         while len(olist) > 0:
             n = heapq.heappop(olist)
+            visited[n.idx] += 1
+
+            if visited[n.idx] > 1000:
+                h = [i for i, v in enumerate(visited) if v >= 1]
+                print("High visit count:", h)
+                for i in h:
+                    print(self.graph.nodes[i].id)
+                self.graph.print_graph()
+
+                raise ValueError
+            #print("incflow", n, n.logprob, len(olist))
             for i, p in enumerate(n.peers):
                 logprob = n.logprob + n.residual[i]
                 #print("Considering", n, p, logprob, p.logprob)
