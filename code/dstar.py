@@ -102,15 +102,16 @@ class Graph:
                 g.add_edge(n.id, p.id, flow=n.flow[i], residual=n.residual[i])
         return g
 
-    def print_graph(self):
+    def print_graph(self, nodes=True, nonflowedges=True):
         print("digraph {")
-        #for n in self.nodes:
-        #    print(f'\tn{n.idx} [label="{n.id}"]')
+        if nodes:
+            for n in self.nodes:
+                print(f'\tn{n.id} [label="{n.id}"]')
         for n in self.nodes:
             for i, p in enumerate(n.peers):
-                if n.flow[i] == 0:
+                if n.flow[i] == 0 and not nonflowedges:
                     continue
-                print(f'\tn{n.idx} -> n{p.idx} [residual="{n.residual[i]}", capacity="{n.capacities[i]}", flow="{n.flow[i]}"]')
+                print(f'\tn{n.id} -> n{p.id} [residual="{n.residual[i]}", capacity="{n.capacities[i]}", flow="{n.flow[i]}"]')
         print("}")
 
 
