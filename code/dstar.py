@@ -234,16 +234,13 @@ class Algo:
     def incflow(self):
         """Compute an incremental flow using stepsize and the residual graph.
         """
-        dest = self.dest
-        src = self.source
-        dest.logprob = 0
-        dest.predecessor = None
-        olist = [dest]
+        self.source.logprob = 0
+        self.source.predecessor = None
+        self.olist = [self.source]
 
         visited = [0] * len(self.graph.nodes)
-
-        while len(olist) > 0:
-            n = heapq.heappop(olist)
+        while len(self.olist) > 0:
+            n = heapq.heappop(self.olist)
             visited[n.idx] += 1
 
             if visited[n.idx] > 1000:
@@ -273,16 +270,16 @@ class Algo:
                 if p.logprob is None or p.logprob > logprob:
                     p.predecessor = n
                     p.logprob = logprob
-                    heapq.heappush(olist, p)
+                    heapq.heappush(self.olist, p)
                     #print("Taken")
 
-        c = src
+        c = self.dest
         flow = []
         while c.predecessor is not None:
-            flow.append((self.stepsize, c, c.predecessor, 2**(-c.logprob)))
+            flow.append((self.stepsize, c.predecessor, c, 2**(-c.logprob)))
             c = c.predecessor
 
-        return flow
+        return flow[::-1]
 
     def applyflow(self, flow):
         """
