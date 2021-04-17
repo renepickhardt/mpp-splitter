@@ -91,6 +91,8 @@ def test_ln_topo():
     dst = '02ad6fb8d693dc1e4569bcedefadf5f72a931ae027dc0f0c544b34c1c6f3b9a02b'
 
     print(f"source={src} destination={dst}")
+
+    flows = {}
     a = Algo(g, src, dst, amt, amt/rounds)
     for i in range(rounds):
         print(f"Iteration {i}/{rounds}")
@@ -101,7 +103,10 @@ def test_ln_topo():
         for h in flow:
             res *= h[3]
 
-        print(flow, res)
+        print("Probability", res)
         a.applyflow(flow)
+        flow = tuple([f[1].id for f in flow] + [dst])
+        flows[flow] = flows.get(flow, 0) + 1
 
-    print(listchannels[0])
+    from pprint import pprint
+    pprint(flows)
