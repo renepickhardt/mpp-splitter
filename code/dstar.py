@@ -4,7 +4,7 @@ import heapq
 import math
 log = math.log2
 
-INFTY = 99999
+INFTY = None
 
 
 class Node:
@@ -150,7 +150,7 @@ class Algo:
         # No flow at all yet, just compute the base case
         elif flow == 0 and invflow == 0:
             lprob = -log((cap + 1 - amt)/(cap + 1))
-            assert(n.residual[i] >= lprob)
+            assert(n.residual[i] is None or n.residual[i] == lprob)
             n.residual[i] = lprob
 
         elif flow > 0:
@@ -159,7 +159,7 @@ class Algo:
                 lprob = INFTY
             else:
                 lprob = -log((cap + 1 - flow - amt) / (cap - flow + 1))
-            assert(n.residual[i] >= lprob)
+            assert(n.residual[i] is None or n.residual[i] == lprob)
             n.residual[i] = lprob
 
             # If we already have a flow in this direction we
@@ -169,7 +169,7 @@ class Algo:
                 lprob = -log((cap + 1 - flow + amt) / (cap + 1 - flow))
             else:
                 lprob = INFTY
-            assert(n.peers[i].residual[rev_id] >= lprob)
+            assert(n.peers[i].residual[rev_id] is None or n.peers[i].residual[rev_id] >= lprob)
             n.peers[i].residual[rev_id] = lprob
 
         elif invflow > 0:
@@ -178,7 +178,7 @@ class Algo:
                 lprob = INFTY
             else:
                 lprob = -log((invcap + 1 - invflow - amt) / (invcap - invflow + 1))
-            assert(n.peers[i].residual[rev_id] >= lprob)
+            assert(n.peers[i].residual[rev_id] is None or n.peers[i].residual[rev_id] == lprob)
             n.peers[i].residual[rev_id] = lprob
 
             if amt <= invflow:
@@ -186,7 +186,7 @@ class Algo:
                 lprob = -log((invcap + 1 - invflow + amt)/(invcap + 1 - invflow))
             else:
                 lprob = INFTY
-            assert(n.residual[i] >= lprob)
+            assert(n.residual[i] is None or n.residual[i] >= lprob)
             n.residual[i] = lprob
 
     def checked_compute_residual(self):
@@ -253,11 +253,23 @@ class Algo:
                 self.graph.print_graph()
 
                 raise ValueError
+
+            # If we made it into olist we must be reachable and we
+            # must have a logprob.
+            assert(n.logprob is not None)
+
             #print("incflow", n, n.logprob, len(olist))
             for i, p in enumerate(n.peers):
+
+                # Only consider this peer if we can reach it over an
+                # edge that is not infinitely expensive, i.e., the
+                # edge should not be considered.
+                if n.residual[i] == INFTY:
+                    continue
+
                 logprob = n.logprob + n.residual[i]
                 #print("Considering", n, p, logprob, p.logprob)
-                if p.logprob > logprob:
+                if p.logprob is None or p.logprob > logprob:
                     p.predecessor = n
                     p.logprob = logprob
                     heapq.heappush(olist, p)
