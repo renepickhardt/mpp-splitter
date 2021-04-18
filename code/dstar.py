@@ -133,7 +133,6 @@ class Algo:
 
         # Classical reach-around...
         rev_id = n.invresidual[i]
-        assert(n == n.peers[i].peers[rev_id])
 
         cap = n.capacities[i]
         invcap = n.peers[i].capacities[rev_id]
@@ -151,7 +150,6 @@ class Algo:
         # No flow at all yet, just compute the base case
         elif flow == 0 and invflow == 0:
             lprob = -log((cap + 1 - amt)/(cap + 1))
-            assert(n.residual[i] is None or n.residual[i] == lprob)
             n.residual[i] = lprob
 
         elif flow > 0:
@@ -160,7 +158,6 @@ class Algo:
                 lprob = INFTY
             else:
                 lprob = -log((cap + 1 - flow - amt) / (cap - flow + 1))
-            assert(n.residual[i] is None or n.residual[i] == lprob)
             n.residual[i] = lprob
 
             # If we already have a flow in this direction we
@@ -170,7 +167,6 @@ class Algo:
                 lprob = -log((cap + 1 - flow + amt) / (cap + 1 - flow))
             else:
                 lprob = INFTY
-            assert(n.peers[i].residual[rev_id] is None or n.peers[i].residual[rev_id] >= lprob)
             n.peers[i].residual[rev_id] = lprob
 
         elif invflow > 0:
@@ -179,7 +175,6 @@ class Algo:
                 lprob = INFTY
             else:
                 lprob = -log((invcap + 1 - invflow - amt) / (invcap - invflow + 1))
-            assert(n.peers[i].residual[rev_id] is None or n.peers[i].residual[rev_id] == lprob)
             n.peers[i].residual[rev_id] = lprob
 
             if amt <= invflow:
@@ -187,7 +182,6 @@ class Algo:
                 lprob = -log((invcap + 1 - invflow + amt)/(invcap + 1 - invflow))
             else:
                 lprob = INFTY
-            assert(n.residual[i] is None or n.residual[i] >= lprob)
             n.residual[i] = lprob
 
     def checked_compute_residual(self):
@@ -236,10 +230,11 @@ class Algo:
         """
         self.source.logprob = 0
         self.source.predecessor = None
-        self.olist = [self.source]
+        considered = 0
 
         visited = [0] * len(self.graph.nodes)
         while len(self.olist) > 0:
+            considered += 1
             n = heapq.heappop(self.olist)
             visited[n.idx] += 1
 
@@ -266,12 +261,10 @@ class Algo:
                     continue
 
                 logprob = n.logprob + n.residual[i]
-                #print("Considering", n, p, logprob, p.logprob)
                 if p.logprob is None or p.logprob > logprob:
                     p.predecessor = n
                     p.logprob = logprob
                     heapq.heappush(self.olist, p)
-                    #print("Taken")
 
         c = self.dest
         flow = []
@@ -279,6 +272,7 @@ class Algo:
             flow.append((self.stepsize, c.predecessor, c, 2**(-c.logprob)))
             c = c.predecessor
 
+        print(f"We considered {considered} nodes")
         return flow[::-1]
 
     def applyflow(self, flow):
