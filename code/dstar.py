@@ -204,6 +204,7 @@ class Algo:
             for i, r in enumerate(n.residual):
                 count += 1
                 if prev[j][i] != r:
+                    print("Difference", j, i, self.graph.nodes[j], self.graph.nodes[j].peers[i], prev[j][i], r, self.graph.nodes[j].flow[i])
                     diff += 1
 
         print(f"Residual check: {diff}/{count} changed since last round")
