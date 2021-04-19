@@ -237,20 +237,9 @@ class Algo:
         self.source.predecessor = None
         considered = 0
 
-        visited = [0] * len(self.graph.nodes)
         while len(self.olist) > 0:
             considered += 1
             n = heapq.heappop(self.olist)
-            visited[n.idx] += 1
-
-            if visited[n.idx] > 1000:
-                h = [i for i, v in enumerate(visited) if v >= 1]
-                print("High visit count:", h)
-                for i in h:
-                    print(self.graph.nodes[i].id)
-                self.graph.print_graph()
-
-                raise ValueError
 
             # If we made it into olist we must be reachable and we
             # must have a logprob.
