@@ -29,6 +29,8 @@ class Node:
                          # when starting from the destination.
 
         self.idx = None
+        self.edge = None  # Best edge to use to get from predecessor
+                          # to this node
 
     def add_peer(self, peer: "Node", capacity: float) -> int:
         """Returns the position of the peer in the list.
@@ -263,13 +265,15 @@ class Algo:
                 logprob = n.logprob + n.residual[i]
                 if p.logprob is None or p.logprob > logprob:
                     p.predecessor = n
+                    p.edge = i
                     p.logprob = logprob
                     heapq.heappush(self.olist, p)
 
         c = self.dest
         flow = []
         while c.predecessor is not None:
-            flow.append((self.stepsize, c.predecessor, c, 2**(-c.logprob)))
+            assert(c.predecessor.peers[c.edge] == c)
+            flow.append((self.stepsize, c.predecessor, c, c.edge))
             c = c.predecessor
 
         print(f"We considered {considered} nodes")
