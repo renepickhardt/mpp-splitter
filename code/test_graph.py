@@ -70,6 +70,8 @@ def test_dijkstra_correct():
         (1, "Y", "D"),
     ]
     assert f == expected
+    a.applyflow(flow)
+    a.checked_compute_residual()
 
 def test_ln_topo():
     g = Graph()
@@ -94,9 +96,9 @@ def test_ln_topo():
 
     flows = {}
     a = Algo(g, src, dst, amt, amt/rounds)
+    a.compute_residual()  # First round must update the entire graph
     for i in range(rounds):
         print(f"Iteration {i}/{rounds}")
-        a.checked_compute_residual()
         flow = a.incflow()
 
         res = 1

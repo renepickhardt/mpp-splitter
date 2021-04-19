@@ -120,9 +120,9 @@ class Graph:
 class Algo:
     def __init__(self, graph: Graph, source, dest, amt: int, stepsize: int = 1) -> None:
         self.graph = graph
-        self.olist: List[Node] = []
         self.source = self.graph.get_node(source)
         self.dest = self.graph.get_node(dest)
+        self.olist: List[Node] = [self.source]
         self.stepsize = stepsize
 
     def _compute_residual_edge(self, n, i, p):
@@ -284,8 +284,28 @@ class Algo:
         """
         for f in flow:
             a, b = f[1], f[2]
-            i = a.get_peer_index(b)
-            a.flow[i] += f[0]  # Flow amount added on this edge
-            # TODO Update the residual a -> b and b -> a
-        for n in self.graph.nodes:
-            n.logprob = INFTY
+            a.flow[b.edge] += f[0]  # Flow amount added on this edge
+
+        # Recompute the residual for the edges we just changed with the flow:
+        for f in flow:
+            a = f[1]
+            b = f[2]
+            forward = (f[1], f[2].edge, a, b)
+
+            #print("Updating residual on edge", forward)
+            self._compute_residual_edge(a, f[2].edge, b)
+
+        for f in flow:
+            # Set f[2] to INFTY so we'll recompute it
+            f[2].logprob = INFTY
+            f[2].predecessor = None
+
+        updated = {}
+        for f in flow:
+            for p in f[2].peers:
+                if p.logprob == INFTY:
+                    continue
+                updated[p.id] = p
+
+        for n in updated.values():
+            heapq.heappush(self.olist, n)
