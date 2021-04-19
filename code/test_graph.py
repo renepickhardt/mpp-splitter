@@ -105,7 +105,6 @@ def test_ln_topo():
         for h in flow:
             res *= h[3]
 
-        print("Probability", res)
         a.applyflow(flow)
         flow = tuple([f[1].id for f in flow] + [dst])
         flows[flow] = flows.get(flow, 0) + 1
