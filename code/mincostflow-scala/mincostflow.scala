@@ -11,7 +11,6 @@ import scalax.collection.GraphTraversal._
 
 object Main extends App {
 
-
   type Node = String
 
   // val E=Graph[Node,WLkDiEdge]()
@@ -71,15 +70,14 @@ object Main extends App {
       val R=saturatedDeltaResidualNetwork(G,x,delta,cost,e)
 
       var S = e.collect {case (n,k) if (k>= delta) => n}
-      var T = e.collect {case (n,k) if (k<= -delta) => n}
+      def T = e.collect {case (n,k) if (k<= -delta) => n}
 
       while (S.size>0 && T.size>0)
       {
         val s=S.head
-        val t=T.head
-        val spOpt = dijkstraShortestPath(R,s,t,reducedCost)
+        val spOpt = dijkstraShortestPath(R,s,T,reducedCost)
 
-        for ((path,distances) <- spOpt)
+        for ((t,path,distances) <- spOpt)
         {
           augment(path)
 
@@ -92,7 +90,6 @@ object Main extends App {
         }
 
         if (e(s) < delta || spOpt.isEmpty) S=S.tail //  ensures progress if no shortest path is found
-        if (e(t) > -delta) T=T.tail
       }
 
       total_cnt+=cnt
@@ -152,7 +149,10 @@ object Main extends App {
           x(edge)-=delta // presaturate the counteredge
           e(edge._2)-=delta
           e(edge._1)+=delta
-
+          // this directly inserts the couter edge after saturating the backward flow
+          // it's a shortcut that makes an extra saturation step unnecessary
+          // under the assumption of non-negative weights.
+          // if negative weights are needed, add an explicit saturation step for negative cost edges
         }
     }
     R
@@ -194,9 +194,9 @@ object Main extends App {
 
   def dijkstraShortestPath(g: Graph[Node,WLkDiEdge],   // based on Acinq's eclair implementation
                            sourceNode: Node,
-                           targetNode: Node,
+                           targetNodes: Traversable[Node],
                            cost: WLkDiEdge[Node] => Double
-  ): Option[(Seq[WLkDiEdge[Node]],HashMap[Node, Double])] =
+  ): Option[(Node,Seq[WLkDiEdge[Node]],HashMap[Node, Double])] =
   {
 
     /**
@@ -214,10 +214,9 @@ object Main extends App {
     }
 
 
-    // the graph does not contain source/destination nodes
+
     val sourceNotInGraph = !g.contains(sourceNode)
-    val targetNotInGraph = !g.contains(targetNode)
-    if (sourceNotInGraph || targetNotInGraph) {
+    if (sourceNotInGraph) {
       return None
     }
 
@@ -258,17 +257,18 @@ object Main extends App {
       }
     }
 
-    if (bestEdges.contains(targetNode)) {
+    targetNodes.collectFirst
+    { case targetNode if (bestEdges.contains(targetNode)) =>
+      {
       val edgePath = new mutable.ArrayBuffer[WLkDiEdge[Node]](20)//max-length
       var current = bestEdges.get(targetNode)
       while (current.isDefined) {
         edgePath += current.get
         current = bestEdges.get(current.get._1)
+        }
+      (targetNode,edgePath.toSeq,bestWeights)
       }
-      Some((edgePath.toSeq,bestWeights))
-    } else
-        None
-
+    }
 
     }
 }
