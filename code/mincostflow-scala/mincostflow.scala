@@ -13,11 +13,15 @@ object Main extends App {
 
   type Node = String
 
-  // val E=Graph[Node,WLkDiEdge]()
+  val E=Graph[Node,WLkDiEdge]()
 
-  // E.add(WLkDiEdge("S","A")(2,0))
-  // E.add(WLkDiEdge("A","S")(2,0))
-  // E.add(WLkDiEdge("S","X")(1,0))
+
+// counterexample! should select the two smaller edges, but does select the bigger one:
+// 0.2 < 0.25
+
+  E.add(WLkDiEdge("S","D")(4,0))
+  E.add(WLkDiEdge("S","D")(3,1))
+  E.add(WLkDiEdge("S","D")(3,2))
   // E.add(WLkDiEdge("X","S")(1,0))
   // E.add(WLkDiEdge("A","B")(2,0))
   // E.add(WLkDiEdge("B","A")(2,0))
@@ -30,27 +34,31 @@ object Main extends App {
   // E.add(WLkDiEdge("B","D")(4,0))
   // E.add(WLkDiEdge("D","B")(4,0))
 
-  // val x = time(capacityScalingMinCostFlow("S","D",2,E))
-  // println(x.collect{case (e,f) if f !=0 => (e,f)})
+  val x = time(capacityScalingMinCostFlow("S","D",4,E))
+  val xedges= x.collect{case (e,f) if f !=0 => (e,f,math.exp(-cost(f,e.weight.toLong)))}
+  println(xedges)
+  println("total probability: "+xedges.map(_._3).product)
 
 
-  val channelGraph = importChannelGraph()
-  val SRC = "03efccf2c383d7bf340da9a3f02e2c23104a0e4fe8ac1a880c8e2dc92fbdacd9df"
-  val DEST = "022c699df736064b51a33017abfc4d577d133f7124ac117d3d9f9633b6297a3b6a"
-  val FLOW = 920
+
+  // val channelGraph = importChannelGraph()
+  // val SRC = "03efccf2c383d7bf340da9a3f02e2c23104a0e4fe8ac1a880c8e2dc92fbdacd9df"
+  // val DEST = "022c699df736064b51a33017abfc4d577d133f7124ac117d3d9f9633b6297a3b6a"
+  // val FLOW = 920
 
 
-  val y=time(capacityScalingMinCostFlow(SRC,DEST,FLOW,channelGraph))
-  val edges= y.collect{case (e,f) if f !=0 => (e,f,math.exp(-cost(f,e.weight.toLong)))}
-  println(edges)
-  println("total probabilty: "+edges.map(_._3).product)
-  println("with local knowledge at source and destination: "+edges.filter(e => e._1._1!=SRC && e._1._2!=DEST).map(_._3).product)
+  // val y=time(capacityScalingMinCostFlow(SRC,DEST,FLOW,channelGraph))
+  // val edges= y.collect{case (e,f) if f !=0 => (e,f,math.exp(-cost(f,e.weight.toLong)))}
+  // println(edges)
+  // println("total probability: "+edges.map(_._3).product)
+  // println("with local knowledge at source and destination: "+edges.filter(e => e._1._1!=SRC && e._1._2!=DEST).map(_._3).product)
 
 
   def capacityScalingMinCostFlow(s:Node,d:Node,U:Long,G:Graph[Node,WLkDiEdge]):Map[WLkDiEdge[Node],Long]=
   {
-    var x: Map[WLkDiEdge[Node],Long]=Map.from(G.edges map {e => (e.toOuter,0L)})
-    var e: Map[Node,Long]=Map.from(G.nodes map {(_,0L)})
+    val x: Map[WLkDiEdge[Node],Long]=Map.from(G.edges map {e => (e.toOuter,0L)})
+    val e: Map[Node,Long]=Map.from(G.nodes map {(_,0L)})
+    val pi = Map.from(G.nodes map {n => (n.toOuter,0d)})
     e(s)=U
     e(d)= -U
 
@@ -60,14 +68,33 @@ object Main extends App {
     var total_cnt=0
 
 
+
     while (delta >= 1)
     {
       var cnt=0
       println(delta+"-scaling phase")
 
-      val pi = Map.from(G.nodes map {n => (n.toOuter,0d)})
+      val R=
+        G.edges.map(_.toOuter).foldRight(Graph[Node,WLkDiEdge]())(addResidualEdges(_,_,x,delta,cost))
 
-      val R=saturatedDeltaResidualNetwork(G,x,delta,cost,e)
+      def saturate(edge: WLkDiEdge[Node]) =
+      {  // beware: changes R,x,e
+        edge.label match {
+          case (l:WLkDiEdge[Node],0) => x(l)+=delta
+                  addResidualEdges(l,R,x,delta,cost)
+          case (l:WLkDiEdge[Node],1) => x(l)-=delta
+                  addResidualEdges(l,R,x,delta,cost)
+        }
+        e(edge._1)-=delta
+        e(edge._2)+=delta
+      }
+
+      print(R)
+
+      def reducedCost(edge: WLkDiEdge[Node]):Double = edge.weight - pi(edge._1) + pi(edge._2)
+
+      for (edge <- R.edges.map(_.toOuter) if (reducedCost(edge)<0))
+        saturate(edge)
 
       var S = e.collect {case (n,k) if (k>= delta) => n}
       def T = e.collect {case (n,k) if (k<= -delta) => n}
@@ -79,17 +106,18 @@ object Main extends App {
 
         for ((t,path,distances) <- spOpt)
         {
-          augment(path)
+          print(path)
+
+          for {edge <- path}
+            saturate(edge)
 
           for {(n,d) <- distances}
             pi(n)-=d
 
-          e(s)-=delta
-          e(t)+=delta
           cnt+=1
         }
 
-        if (e(s) < delta || spOpt.isEmpty) S=S.tail //  ensures progress if no shortest path is found
+        if (e(s) < delta || spOpt.isEmpty) S=S.tail //  ensures progress even if no shortest path is found
       }
 
       total_cnt+=cnt
@@ -97,67 +125,34 @@ object Main extends App {
 
       delta/=2
 
-
-
-      def reducedCost(edge: WLkDiEdge[Node]):Double = edge.weight - pi(edge._1) + pi(edge._2)
-
-      def augment(path:Seq[WLkDiEdge[Node]]) =
-      { //beware: changes R,x
-        for {edge <- path}
-        {
-          val olabel = edge.label match { case (l,i) => l }
-          val originalEdge = WLkDiEdge(edge._1,edge._2)(0,olabel)
-          val originalCounterEdge = WLkDiEdge(edge._2,edge._1)(0,olabel)
-          if (x.contains(originalCounterEdge) && x(originalCounterEdge)>=delta)
-            x(originalCounterEdge)-=delta
-          else x(originalEdge)=x.getOrElse(originalEdge,0L)+delta
-
-          val counterEdge=WLkDiEdge(edge._2,edge._1)(-edge.weight,edge.label)
-          R add counterEdge
-          R remove edge
-        }
-
-      }
-
     }
 
     x
  }
 
+
+
   def cost(a:Long,c:Long): Double = log(c+1)-log(c+1-a)
    // """returns the negative log probability for the success to deliver `a` satoshis through a channel of capacity `c`"""
 
 
-  def saturatedDeltaResidualNetwork(G:Graph[Node,WLkDiEdge],x:Map[WLkDiEdge[Node],Long],delta:Long,C:(Long,Long)=>Double,e: Map[Node,Long]): Graph[Node,WLkDiEdge] =
-  {  // beware: changes x and e
-    val R=Graph[Node,WLkDiEdge]()
-    for (innerEdge <- G.edges)
-    {
-      val edge = innerEdge.toOuter
-      val f = x(edge)
-      val cap = edge.weight.toLong
-      val label =edge.label
-      if (f+delta <=cap)
-        {
-          val unitCost = (C(f + delta, cap) - C(f,cap))/delta
-          R add WLkDiEdge(edge._1,edge._2)(unitCost,(label,0))
-        }
-      if (delta <= f) //backward flow
-        {
-          val unitCost = (C(f - delta, cap) - C(f,cap))/delta
-          R add WLkDiEdge(edge._1,edge._2)(-unitCost,(label,1))
-          x(edge)-=delta // presaturate the counteredge
-          e(edge._2)-=delta
-          e(edge._1)+=delta
-          // this directly inserts the couter edge after saturating the backward flow
-          // it's a shortcut that makes an extra saturation step unnecessary
-          // under the assumption of non-negative weights.
-          // if negative weights are needed, add an explicit saturation step for negative cost edges
-        }
-    }
+  def addResidualEdges(edge:WLkDiEdge[Node],R:Graph[Node,WLkDiEdge],x:Map[WLkDiEdge[Node],Long],delta:Long,C:(Long,Long)=>Double): Graph[Node,WLkDiEdge] =
+  {
+    val f = x(edge)
+    val cap = edge.weight.toLong
+    val forwardEdge=WLkDiEdge(edge._1,edge._2)((C(f + delta, cap) - C(f,cap))/delta,(edge,0))
+    val backwardEdge=WLkDiEdge(edge._2,edge._1)((C(f - delta, cap) - C(f,cap))/delta,(edge,1))
+
+    if (f+delta <=cap)
+      R add forwardEdge
+    else R remove forwardEdge
+
+    if (delta <= f)
+      R add backwardEdge
+    else R remove backwardEdge
+
     R
   }
-
 
   def importChannelGraph():Graph[Node,WLkDiEdge]=
   {
