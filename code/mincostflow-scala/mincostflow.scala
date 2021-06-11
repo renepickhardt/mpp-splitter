@@ -6,7 +6,8 @@ import scala.collection.mutable.{Map,HashMap}
 import scala.collection._
 import scala.math.log
 import scalax.collection.GraphTraversal._
-
+import scala.annotation.tailrec
+//import fr.acinq.eclair.router.Graph
 
 
 object Main extends App {
@@ -44,88 +45,132 @@ object Main extends App {
 
 
   val y=time(capacityScalingMinCostFlow(SRC,DEST,FLOW,channelGraph))
-  val edges= y.collect{case (e,f) if f !=0 => (e,f,math.exp(-cost(f,e.weight.toLong)))}
-  //println(edges)
+  val edges= y.collect{case (e,f) if f !=0  => (e,f,math.exp(-cost(f,e.weight.toLong).toDouble))}
+  println(edges)
   println("total probability: "+edges.map(_._3).product)
   println("with local knowledge at source and destination: "+edges.filter(e => e._1._1!=SRC && e._1._2!=DEST).map(_._3).product)
 
+  @tailrec def scale (G:Graph[Node,WLkDiEdge],delta: Long,state:State,pi:Map[Node,Double]):Map[WLkDiEdge[Node],Long] =
+  {
+    println(delta+"-scaling phase")
+    val R=
+      G.edges.toOuter.foldLeft(Graph[Node,WLkDiEdge]())(calculateResidualEdges(_,_,state.x,delta,cost))
+
+    val negEdges = R.edges.toOuter.filter(reducedCost(pi)(_)<0)
+
+    val satState=negEdges.foldLeft(State(R,state.x,state.e))(saturate(G,delta)(_)(_))
+
+    assert(satState.R.edges.toOuter.forall(reducedCost(pi)(_)>=0))
+
+    val (augState,newPi) = augment(satState,pi,delta,G)
+
+    augState.R.edges.toOuter.foreach(e=>assert(reducedCost(newPi)(e)>=0,"edge: "+e+" redcost:"+reducedCost(newPi)(e)+ " pi(x):"+newPi(e._1)+" pi(y):"+newPi(e._2)))
+
+    if (delta == 1) augState.x
+    else scale(G,delta/2,augState,newPi)
+  }
+
+  @tailrec def augment(state:State,pi:Map[Node,Double],delta:Long,G:Graph[Node,WLkDiEdge]):(State,Map[Node,Double]) =
+  {
+    val S = state.e.collect {case (n,k) if (k>= delta) => n}
+    val T = state.e.collect {case (n,k) if (k<= -delta) => n}
+    if (S.isEmpty || T.isEmpty) return (state,pi)
+
+    dijkstraShortestPath(state.R,S.head,T,reducedCost(pi)) match
+    {case Some((t,path,distances)) =>
+      print("augmenting "+path)
+      val newPi=pi.map{case (n:Node,pi:Double) => (n,pi - distances(n))} // everything is reachable
+      val augState=path.foldLeft(state)(saturate(G,delta)(_)(_))
+      augment(augState,newPi,delta,G)
+     case None => throw (new(Exception))//(state,pi)))
+    }
+  }
 
   def capacityScalingMinCostFlow(s:Node,d:Node,U:Long,G:Graph[Node,WLkDiEdge]):Map[WLkDiEdge[Node],Long]=
   {
-    val x: Map[WLkDiEdge[Node],Long]=Map.from(G.edges map {e => (e.toOuter,0L)})
-    val e: Map[Node,Long]=Map.from(G.nodes map {(_,0L)})
-
-    e(s)=U
-    e(d)= -U
-
-    var delta = math.pow(2,(log(U)/log(2)).floor).toLong
-
-    var satState=State(Graph[Node,WLkDiEdge](),x,e)
-    var total_cnt=0
-
-    while (delta >= 1)
+    G.add("null")
+    for(node <- G.nodes.toOuter)
     {
-      val pi = Map.from(G.nodes map {n => (n.toOuter,0d)})
-      var cnt=0
-      println(delta+"-scaling phase")
+      G.add(WLkDiEdge("null",node)(Double.PositiveInfinity,"x"))
+      G.add(WLkDiEdge(node,"null")(Double.PositiveInfinity,"y"))
+    } //make every node always reachable from every other
 
-      val R=
-        G.edges.toOuter.foldLeft(Graph[Node,WLkDiEdge]())(calculateResidualEdges(_,_,x,delta,cost))
+    val delta = math.pow(2,(log(U)/log(2)).floor).toLong
 
-      val negEdges = R.edges.toOuter.filter(reducedCost(pi)(_)<0)
+    val state=State(Graph[Node,WLkDiEdge](),Map.from(G.edges map {e => (e.toOuter,0L)}),Map.from(G.nodes map {(_,0L)}))
+    state.e(s)=U
+    state.e(d)= -U
 
-      satState=negEdges.foldLeft(State(R,x,e))(saturate(delta)(_)(_))
+    val pi=Map.from(G.nodes map {n => (n.toOuter,0d)})
 
-      var S = e.collect {case (n,k) if (k>= delta) => n}.toSet
-      def T = e.collect {case (n,k) if (k<= -delta) => n}
+    scale(G,delta,state,pi)
 
-      while (S.size>0 && T.size>0)
-      {
-        val s=S.head
+    // var total_cnt=0
 
-        val spOpt = dijkstraShortestPath(R,s,T,reducedCost(pi))
+    // while (delta >= 1)
+    // {
+    //   val pi = Map.from(G.nodes map {n => (n.toOuter,0d)})
+    //   var cnt=0
+    //   println(delta+"-scaling phase")
 
-        for ((t,path,distances) <- spOpt)
-        {
-          for {(n,d) <- distances}
-            pi(n)-=d
+    //   val R=
+    //     G.edges.toOuter.foldLeft(Graph[Node,WLkDiEdge]())(calculateResidualEdges(_,_,satState.x,delta,cost))
 
-          satState=path.foldLeft(satState)(saturate(delta)(_)(_))
+    //   val negEdges = R.edges.toOuter.filter(reducedCost(pi)(_)<0)
 
-          cnt+=1
-        }
+    //   satState=negEdges.foldLeft(State(R,satState.x,satState.e))(saturate(delta)(_)(_))
 
-        if (e(s) < delta || spOpt.isEmpty) S-=s //  ensures progress even if no shortest path is found
-      }
+    //   var S = satState.e.collect {case (n,k) if (k>= delta) => n}.toSet
+    //   def T = satState.e.collect {case (n,k) if (k<= -delta) => n}
 
-      total_cnt+=cnt
-      println("augmented %d paths in the %d-scaling phase and %d paths in total".format(cnt,delta,total_cnt))
+    //   while (S.size>0 && T.size>0)
+    //   {
+    //     val s=S.head
 
-      delta/=2
+    //     val spOpt = dijkstraShortestPath(satState.R,s,T,reducedCost(pi))
 
-    }
+    //     for ((t,path,distances) <- spOpt)
+    //     {
+    //       for {(n,d) <- distances}
+    //         pi(n)-=d
 
-    satState.x
+    //       satState=path.foldLeft(satState)(saturate(delta)(_)(_))
+
+    //       cnt+=1
+    //     }
+
+    //     if (satState.e(s) < delta || spOpt.isEmpty) S-=s //  ensures progress even if no shortest path is found
+    //   }
+
+    //   total_cnt+=cnt
+    //   println("augmented %d paths in the %d-scaling phase and %d paths in total".format(cnt,delta,total_cnt))
+
+    //   delta/=2
+
+    // }
+
+    // satState.x
  }
 
-  def reducedCost(pi: Map[Node,Double])(edge: WLkDiEdge[Node]):Double = edge.weight - pi(edge._1) + pi(edge._2)
+  def reducedCost(pi: Map[Node,Double])(edge: WLkDiEdge[Node]):Double =  edge.weight - pi(edge._1) + pi(edge._2)
 
-  def saturate(delta:Long)(s:State)(edge: WLkDiEdge[Node]):State =
+  def saturate(G:Graph[Node,WLkDiEdge],delta:Long)(s:State)(edge: WLkDiEdge[Node]):State =
   {
-    val origEdge = edge.label match {
-      case (l:String,true) => WLkDiEdge(edge._1,edge._2)(0,l)
-      case (l:String,false) => WLkDiEdge(edge._2,edge._1)(0,l)
+      val origEdge = edge.label match {
+      case (l:String,true) => G.get(WLkDiEdge(edge._1,edge._2)(0,l)).toOuter
+      case (l:String,false) => G.get(WLkDiEdge(edge._2,edge._1)(0,l)).toOuter
     }
     s.x(origEdge) = edge.label match {
       case (l:String,true) => s.x(origEdge)+delta
       case (l:String,false) => s.x(origEdge)-delta
     }
-    calculateResidualEdges(s.R,origEdge,s.x,delta,cost)
+    val R=calculateResidualEdges(s.R,origEdge,s.x,delta,cost)
 
     s.e(edge._1)-=delta
     s.e(edge._2)+=delta
 
-    s
+    State(R,s.x,s.e)
+
   }
 
 
@@ -137,19 +182,29 @@ object Main extends App {
   def calculateResidualEdges(R:Graph[Node,WLkDiEdge],edge:WLkDiEdge[Node],x:Map[WLkDiEdge[Node],Long],delta:Long,C:(Long,Long)=>Double): Graph[Node,WLkDiEdge] =
   {
     val f = x(edge)
-    val cap = edge.weight.toLong
+    val cap = edge.weight.round
     val label = edge.label
-    val forwardEdge=WLkDiEdge(edge._1,edge._2)((C(f + delta, cap) - C(f,cap))/delta,(label,true))
-    val backwardEdge=WLkDiEdge(edge._2,edge._1)((C(f - delta, cap) - C(f,cap))/delta,(label,false))
-
+    val unitCostF=if(cap<Long.MaxValue) (C(f + delta, cap) - C(f,cap))/delta else 100
+    val forwardEdge=WLkDiEdge(edge._1,edge._2)(unitCostF,(label,true))
+//    assert((!forwardEdge.weight.isNaN()) || f+delta > cap,forwardEdge)
+    val unitCostB=if(cap<Long.MaxValue) (C(f - delta, cap) - C(f,cap))/delta else -100
+    val backwardEdge=WLkDiEdge(edge._2,edge._1)(unitCostB,(label,false))
+    val string=("original: "+edge.toString+" backward: "+backwardEdge.toString+" cap: "+cap+" delta:"+ delta + " f:"+f)
+//    assert((!backwardEdge.weight.isNaN())|| delta > f,string)
 
     if (f+delta <=cap)
       R.upsert(forwardEdge)
-    else R.remove(forwardEdge)
+    else if (R.contains(forwardEdge)) R.remove(forwardEdge)
+
+  //  assert(!(forwardEdge.weight.isNaN() && R.contains(forwardEdge)),edge+R.get(forwardEdge).toOuter)
 
     if (delta <= f)
       R.upsert(backwardEdge)
-    else R.remove(backwardEdge)
+    else if (R.contains(backwardEdge)) R.remove(backwardEdge)
+
+ //   assert(!forwardEdge.weight.isNaN() || !R.contains(forwardEdge))
+
+ //   assert(!backwardEdge.weight.isNaN() || !R.contains(backwardEdge))
 
     R
   }
@@ -159,18 +214,18 @@ object Main extends App {
     val jsonString = os.read(os.pwd/"listchannels.json")
     val data = ujson.read(jsonString)
 
-    val G = Graph[Node,WLkDiEdge]()
-
-    for (channel <- data("channels").arr)
-    {
+    val G = data("channels").arr.foldLeft(Graph[Node,WLkDiEdge]()){
+      (G,channel) =>
       val src = channel("source").str
       val dest = channel("destination").str
       val cap = (channel("satoshis").num) /10000
       val sid = channel("short_channel_id").str
-      G.add(src)
-      G.add(dest)
-      if (G.anyEdgeSelector(G get src,G get dest).isEmpty)
-        G.add(WLkDiEdge(src,dest)(cap,sid))
+      //    G.add(src)
+      //    G.add(dest)
+      //     if (G.anyEdgeSelector(G get src,G get dest).isEmpty)
+      if (cap>=1d)
+        G+=(WLkDiEdge(src,dest)(cap,sid))
+      else G
     }
     println("importing "+G.edges.size+" channels")
 
