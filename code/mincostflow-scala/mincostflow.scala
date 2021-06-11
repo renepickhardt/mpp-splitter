@@ -76,24 +76,25 @@ object Main extends App {
     val T = state.e.collect {case (n,k) if (k<= -delta) => n}
     if (S.isEmpty || T.isEmpty) return (state,pi)
 
-    dijkstraShortestPath(state.R,S.head,T,reducedCost(pi)) match
-    {case Some((t,path,distances)) =>
-      print("augmenting "+path)
-      val newPi=pi.map{case (n:Node,pi:Double) => (n,pi - distances(n))} // everything is reachable
+    S.collectFirst(dijkstraShortestPath(state.R,_,T,reducedCost(pi)) match
+                    {case Some((t,path,distances)) => (path,distances)})  match
+    { case Some((path,distances)) =>
+      //print("augmenting "+path)
+      val newPi=pi.map{case (n:Node,pi:Double) => (n,pi - distances.getOrElse(n,1000d))} // everything is reachable
       val augState=path.foldLeft(state)(saturate(G,delta)(_)(_))
       augment(augState,newPi,delta,G)
-     case None => throw (new(Exception))//(state,pi)))
+     case None => (state,pi)
     }
   }
 
   def capacityScalingMinCostFlow(s:Node,d:Node,U:Long,G:Graph[Node,WLkDiEdge]):Map[WLkDiEdge[Node],Long]=
   {
-    G.add("null")
-    for(node <- G.nodes.toOuter)
-    {
-      G.add(WLkDiEdge("null",node)(Double.PositiveInfinity,"x"))
-      G.add(WLkDiEdge(node,"null")(Double.PositiveInfinity,"y"))
-    } //make every node always reachable from every other
+    // G.add("null")
+    // for(node <- G.nodes.toOuter)
+    // {
+    //   G.add(WLkDiEdge("null",node)(Double.PositiveInfinity,"x"))
+    //   G.add(WLkDiEdge(node,"null")(Double.PositiveInfinity,"y"))
+    // } //make every node always reachable from every other
 
     val delta = math.pow(2,(log(U)/log(2)).floor).toLong
 
@@ -172,7 +173,6 @@ object Main extends App {
     State(R,s.x,s.e)
 
   }
-
 
 
   def cost(a:Long,c:Long): Double = log(c+1)-log(c+1-a)
