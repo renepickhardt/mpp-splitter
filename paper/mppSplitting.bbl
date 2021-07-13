@@ -1,0 +1,79 @@
+\begin{thebibliography}{10}
+
+\bibitem{ahuja1993network}
+R.K. Ahuja, T.L. Magnanti, and J.B. Orlin.
+\newblock {\em Network Flows: Theory, Algorithms, and Applications}.
+\newblock Prentice Hall, 1993.
+
+\bibitem{DBLP:journals/corr/abs-1910-01834}
+Vivek~Kumar Bagaria, Joachim Neu, and David Tse.
+\newblock Boomerang: Redundancy improves latency and throughput in payment
+  networks.
+\newblock {\em CoRR}, abs/1910.01834, 2019.
+
+\bibitem{DBLP:journals/corr/abs-1911-09432}
+Ferenc B{\'{e}}res, Istv{\'{a}}n~Andr{\'{a}}s Seres, and Andr{\'{a}}s~A.
+  Bencz{\'{u}}r.
+\newblock A cryptoeconomic traffic analysis of bitcoins lightning network.
+\newblock {\em CoRR}, abs/1911.09432, 2019.
+
+\bibitem{ford_fulkerson_1956}
+L.~R. Ford and D.~R. Fulkerson.
+\newblock Maximal flow through a network.
+\newblock {\em Canadian Journal of Mathematics}, 8:399–404, 1956.
+
+\bibitem{guisewite1990minimum}
+Geoffrey~M Guisewite and Panos~M Pardalos.
+\newblock Minimum concave-cost network flow problems: Applications, complexity,
+  and algorithms.
+\newblock {\em Annals of Operations Research}, 25(1):75--99, 1990.
+
+\bibitem{lange2021impact}
+Kimberly Lange, Elias Rohrer, and Florian Tschorsch.
+\newblock On the impact of attachment strategies for payment channel networks.
+\newblock {\em arXiv preprint arXiv:2102.09256}, 2021.
+
+\bibitem{Minoux1986}
+M.~Minoux.
+\newblock {\em Solving integer minimum cost flows with separable convex cost
+  objective polynomially}, pages 237--239.
+\newblock Springer Berlin Heidelberg, Berlin, Heidelberg, 1986.
+
+\bibitem{papadis2020blockchain}
+Nikolaos Papadis and Leandros Tassiulas.
+\newblock Blockchain-based payment channel networks: Challenges and recent
+  advances.
+\newblock {\em IEEE Access}, 8:227596--227609, 2020.
+
+\bibitem{Pickhardt2019}
+Ren\'e Pickhardt and Mariusz Nowostawski.
+\newblock Imbalance measure and proactive channel rebalancing algorithm for the
+  lightning network.
+\newblock {\em CoRR}, abs/1912.09555, 2019.
+
+\bibitem{pickhardt2021security}
+Rene Pickhardt, Sergei Tikhomirov, Alex Biryukov, and Mariusz Nowostawski.
+\newblock Security and privacy of lightning network payments with uncertain
+  channel balances, 2021.
+
+\bibitem{tikhomirov2020probing}
+Sergei Tikhomirov, Rene Pickhardt, Alex Biryukov, and Mariusz Nowostawski.
+\newblock Probing channel balances in the lightning network.
+\newblock {\em arXiv preprint arXiv:2004.00333}, 2020.
+
+\bibitem{tsengbertsekas}
+Paul Tseng and {Dimitri P.} Bertsekas.
+\newblock An $\epsilon$-relaxation method for generalized separable convex cost
+  network flow problems.
+\newblock In {William H.} Cunningham, S.Thomas McCormick, and Maurice
+  Queyranne, editors, {\em Integer Programming and Combinatorial Optimization -
+  5th International IPCO Conference, 1996 Proceedings}, Lecture Notes in
+  Computer Science, pages 85--93. Springer Verlag, 1996.
+
+\bibitem{DBLP:journals/corr/abs-2006-14358}
+Finnegan Waugh and Ralph Holz.
+\newblock An empirical study of availability and reliability properties of the
+  bitcoin lightning network.
+\newblock {\em CoRR}, abs/2006.14358, 2020.
+
+\end{thebibliography}
