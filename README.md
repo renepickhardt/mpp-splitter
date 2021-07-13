@@ -42,5 +42,5 @@ Other good resources are the [lecture notes by Dorit Hochbaum](https://hochbaum.
 ## Media and Public
 
 * German Speaking Bitcoin Podcast Honigdachs invited us to the show 62 titled [Pickhardt-Payments](https://coinspondent.de/2021/07/11/honigdachs-62-pickhardt-payments/)
-* Andreas M. Antonopoulos noted that our method [massively improves the Lightning Network and is a game changer](https://twitter.com/aantonop/status/1403823353366994946).
-* The work was presented on [What Bitcoin Did Podcast](https://www.whatbitcoindid.com/podcast/mastering-lightning)
+* Andreas M. Antonopoulos has noted that our method [massively improves the Lightning Network and is a game changer](https://twitter.com/aantonop/status/1403823353366994946).
+* The work has been presented on [What Bitcoin Did Podcast](https://www.whatbitcoindid.com/podcast/mastering-lightning)
