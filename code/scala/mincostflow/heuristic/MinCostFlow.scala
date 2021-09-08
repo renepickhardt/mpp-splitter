@@ -25,7 +25,7 @@
 // by Ahuja, Magnanti and Orlin
 //
 // it uses Long costs for increased numerical stability
-
+// reads from a local file 'listchannels.json' in c-lightning listchannels format
 
 package mincostflow
 import scalax.collection.mutable.Graph
