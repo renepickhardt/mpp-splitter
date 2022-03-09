@@ -104,7 +104,7 @@ While in general min-cost flow problems are complex
 optimization problems, the above mentioned subclass is known to have polynomial
 time solutions with a runtime complexity of $O(m \cdot \log(U) \cdot S(n,m))$
 where $n$ is the number of nodes, $m$ is the number of edges on the network, $U$
-is the amount to be delivered, and $S(m,n)$ is the time it takes to obtain a
+is the amount to be delivered, and $S(n,m)$ is the time it takes to obtain a
 solution to the single source shortest path problem\cite{Minoux1986,ahuja1993network}. This
 is typically done using Dijkstra's Algorithm in time $O(m+n) \cdot \log(n)$, so
 that we arrive at a total runtime of $O(\log(U)\cdot(m^2+mn)\cdot\log(n))$.
