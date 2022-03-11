@@ -185,7 +185,7 @@ After simplifying by assuming a flow value $x:=f(e)$ and defining $p(x):=P_e(X_x
 \[
 c_e(x)=-\log(p(x))
 \]
-Assuming this function is twice differentiable, it is convex if its second derivative is be nonnegative on the entire domain.
+Assuming this function is twice differentiable, it is convex iff its second derivative is be nonnegative on the entire domain.
 The first derivative is:
 \[
 c_e'(x) = -\frac{p(x)'}{p(x)}
@@ -194,7 +194,7 @@ and the second derivative is:
 \[
 c_e''(x) = \frac{(p'(x))^2-p(x)p''(x)}{{p^2(x)}} \geq 0
 \]
-In particular we see that the negative log probabilities result in a convex cost function if the following inequality holds:
+In particular we see that the negative log probabilities result in a convex cost function iff the following inequality holds:
 \[
 (p'(x))^2 \geq p(x)p''(x)
 \]
