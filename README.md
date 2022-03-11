@@ -22,7 +22,7 @@ This research was partially funded by the [Norwegian University of Science and T
 
 However as [described in the Paper](https://arxiv.org/abs/2107.05322) there is a lot of work (and probably also research on the way) that needs to be done in order to make this technology deployable on the Lightning Network.  
 
-In particular after [I shared that a breakthrough had been discovered](https://twitter.com/renepickhardt/status/1401514950984712198) by us I had many venture capitalists and commercial parties offering large sums **if** we would find a way to commercalize this in a proprietary way. However I believe that [knowledge should be free and openly available](https://archive.org/stream/GuerillaOpenAccessManifesto/Goamjuly2008_djvu.txt). As Stefan shared this view we decided to take the open path for that particular path finding problem (:
+In particular after [I shared that a breakthrough had been discovered](https://twitter.com/renepickhardt/status/1401514950984712198) by us I had many venture capitalists and commercial parties offering large sums **if** we would find a way to commercialize this in a proprietary way. However I believe that [knowledge should be free and openly available](https://archive.org/stream/GuerillaOpenAccessManifesto/Goamjuly2008_djvu.txt). As Stefan shared this view we decided to take the open path for that particular path finding problem (:
 
 As those offers and opportunity costs exceeded anything that I ever imagined to earn and as funding in academia is always a gamble and the future is unclear I would highly appreciate if you want to help me become an [independent Lightning Network developer and Researcher](https://ln.rene-pickhardt.de) in the future. Thus I will highly appreciate if you consider to support my future work via: 
 
@@ -35,7 +35,7 @@ The code in this repository implements the min-cost flow cost scaling algorithm 
 
 The approach mainly follows chapter 9, 10.2 and 14.5 of the textbook.
 
-Other good resources are the [Lecture series](http://courses.csail.mit.edu/6.854/20/) by [David Karger](http://people.csail.mit.edu/karger/) with [lecture notes](http://courses.csail.mit.edu/6.854/current/Notes/) and more specificially [this one](http://courses.csail.mit.edu/6.854/current/Notes/n09-mincostflow.html). Finally the [relevant subset of the recorded videos can be found at this playlist](https://www.youtube.com/playlist?list=PLaRKlIqjjguDXlnJWG2T7U52iHZl8Edrcv)
+Other good resources are the [Lecture series](http://courses.csail.mit.edu/6.854/20/) by [David Karger](http://people.csail.mit.edu/karger/) with [lecture notes](http://courses.csail.mit.edu/6.854/current/Notes/) and more specifically [this one](http://courses.csail.mit.edu/6.854/current/Notes/n09-mincostflow.html). Finally the [relevant subset of the recorded videos can be found at this playlist](https://www.youtube.com/playlist?list=PLaRKlIqjjguDXlnJWG2T7U52iHZl8Edrcv)
 
 Other good resources are the [lecture notes by Dorit Hochbaum](https://hochbaum.ieor.berkeley.edu/)
 
@@ -44,4 +44,4 @@ Other good resources are the [lecture notes by Dorit Hochbaum](https://hochbaum.
 * German Speaking Bitcoin Podcast Honigdachs invited us to the show 62 titled [Pickhardt-Payments](https://coinspondent.de/2021/07/11/honigdachs-62-pickhardt-payments/).
 * Andreas M. Antonopoulos has noted that our method [massively improves the Lightning Network and is a game changer](https://twitter.com/aantonop/status/1403823353366994946).
 * The work has been presented on [What Bitcoin Did Podcast](https://www.whatbitcoindid.com/podcast/mastering-lightning).
-* German Speking Podcaster Blocktrainer has created an [easy to understand article](https://www.blocktrainer.de/pickhardt-payments-lightning-netzwerk/) about our results.
+* German speaking podcaster Blocktrainer has created an [easy to understand article](https://www.blocktrainer.de/pickhardt-payments-lightning-netzwerk/) about our results.
