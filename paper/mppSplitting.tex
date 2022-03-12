@@ -163,7 +163,7 @@ We recall that --- given a prior belief about the balance uncertainty via a prob
 Whereas in~\cite{pickhardt2021security} the goal was maximizing the path success probabilities, here we aim to maximize the success probability for the entire flow. Assuming the channel balances to be independently distributed, this combined success probability is simply the product of all channel success probabilities:
 
 \[
-P(f)=\prod_{e\in E}P(X_{e} \geq f_e)
+P(f)=\prod_{e\in E}P_e\left(X_{e} \geq f_e\right)
 \]
 
 Any flow $f$ that maximizes the success probability $P(f)$ is also minimizing $-\log\left(P(f)\right)$ and vice versa.
