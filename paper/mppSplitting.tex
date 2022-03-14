@@ -139,7 +139,7 @@ In this way, we can represent any MPP split as a flow and vice versa.
 We emphasize that the paths of the decomposed flow that lead to the MPP split do not need to be disjoint.
 
 Given the balance values, we could decide the maximum possible amount that can be sent for any given node pair $s,t \in V$ by computing the minimal $s$--$t$-cut.
-Using, say, the Ford-Fulkerson algorithm\cite{ford_fulkerson_1956} one could compute a max-flow and disect it into a series of paths.
+Using, say, the Ford-Fulkerson algorithm\cite{ford_fulkerson_1956} one could compute a max-flow and dissect it into a series of paths.
 These paths could then be used to construct several onions for a multi-part payment.
 
 In a preliminary test we use two different prior distributions to generate two static balance graphs and check on each how often the min-cut between arbitrarily chosen pairs of sender and receiver is actually determined by the minimum of the local outbound capacity of the sender and the local inbound capacity of the recipient.
@@ -176,7 +176,7 @@ The right hand side of the equation has the form of a separable cost function $C
 \[
 C(f) := \sum_{e\in E}-\log\left(P_e(X_e \geq f_e)\right)
 \]
-Given fixed probability distributions for the channel balances, finding the most likely flow is therefore equivalent to finding a flow of minimum cost on this \emph{uncertainty network}. Any such flow can then be disected into the most likely multi-path payment as in the previous section.
+Given fixed probability distributions for the channel balances, finding the most likely flow is therefore equivalent to finding a flow of minimum cost on this \emph{uncertainty network}. Any such flow can then be dissected into the most likely multi-path payment as in the previous section.
 
 In general, finding optimal solutions to the min-cost flow problem with non-linear costs is NP-hard~\cite{guisewite1990minimum}. Fortunately, in the special case of integer flows and capacities together with a separable convex cost function a polynomial algorithm has been introduced by~\cite{Minoux1986}.
 Since our flows are integer-valued and the cost function is separable we need to understand when a cost function arising from channel success probabilities is convex in order to be able to apply such an algorithm.
@@ -203,7 +203,7 @@ This indicates that the polynomial algorithm can be used to find the flow that m
 \[
 C(f)=\sum_{e\in E}-\log\left(\frac{u_{e}+1-f_e}{u_{e}+1}\right)
 \]
-Thus the most probable multi-part split for delivering the amount $U$ can be found by solving a min-cost flow problem and disecting the flow into paths.
+Thus the most probable multi-part split for delivering the amount $U$ can be found by solving a min-cost flow problem and dissecting the flow into paths.
 
 We do not explicitly handle fees in this model, but observe that if we can find a flow that includes an upper bound to the total fees, the real payment success probability will be at least as high as the one predicted by this model, since the transported amount is only falling along the paths and our probability function is monotonic.
 
@@ -304,7 +304,7 @@ We enter the next round with that amount on the updated uncertainty network by c
 Let us go through an example that illustrates why finding a min-cost flow is necessary instead of just adding optimal paths.
 It also serves to better understand the round-based algorithm.
 In order to simplify the example, we ignore fees and channel reserves and optimize purely for probability here.
-We also hide the nonintuitive negative log probabilities by writing down the corresponding max-probable flow with probabilities as edge weights.
+We also hide the unintuitive negative log probabilities by writing down the corresponding max-probable flow with probabilities as edge weights.
 For the channel graph depicted in Figure~\ref{fig:counterexample},
 \begin{figure}[htpb]
   \center
@@ -332,7 +332,7 @@ However if we look at the $2$-flow $g^2$ that sends $1$ sat along $s,A,B,d$ and 
 which is also the min-cost $2$-flow in this graph.
 This example shows that finding a min-cost flow cannot in general be done  by computing the most likely path for a single sat and extending it with the next most likely $1$-sat-paths.\footnote{This simple $+1$-algorithm could actually be rescued so that it would be able to compute the min-cost flow. However both versions would also be quite slow as they would be linear in the amount that was to be sent --- which is exponential in the input size}
 
-Extending our example and assuming we want to send a total of 3 sat we start again by computing the min-cost flow $f^3$ which can be disected into two paths $l_1= s,X,Y,d$ with an amount of $1$ and another path $l_2=s,A,B,d$ with an amount of $2$.
+Extending our example and assuming we want to send a total of 3 sat we start again by computing the min-cost flow $f^3$ which can be dissected into two paths $l_1= s,X,Y,d$ with an amount of $1$ and another path $l_2=s,A,B,d$ with an amount of $2$.
 After sending out the onions we might have learned that the onion along $l_1$ has been successful, but the one with $2$ sat along $l_2$ has failed because $B$ did not have enough liquidity to forward the onion to $d$ on the $(B,d)$ channel.
 For the second phase of the algorithm we now compute the min-cost flow on a graph where we know that we can deliver 2 sat with perfect certainty to $B$.
 This updated uncertainty network is depicted in Figure~\ref{fig:round2}
@@ -375,7 +375,7 @@ Because the exact algorithm takes more than 30 minutes even in the faster Scala 
 
 We picked a medium-sized Lightning node that got randomly assigned a local balance of $0.42$ BTC and tried to send $0.4$ BTC to another node $3$ hops distant using the round-based algorithm described in Section~\ref{rounds}.
 The remote node had a total capacity of roughly $1.5$ BTC and more than $0.4$ BTC inbound liquidity. 
-Assuming no routing hints from the recipient we started the first round computing a flow that was disected into several hundred small paths.
+Assuming no routing hints from the recipient we started the first round computing a flow that was dissected into several hundred small paths.
 Sending them out we where able to deliver almost $75\%$ of the amount that we wanted to deliver at once.
 We updated the graph with the insights from the successes and failures and started the second round for the residual amount of roughly $0.1$ BTC.
 In this round the min-cost solver on the graph with less uncertainty suggested a split of about $100$ paths.
