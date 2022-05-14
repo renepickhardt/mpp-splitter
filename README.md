@@ -1,6 +1,6 @@
 # Optimally Reliable & Cheap Payment Flows on the Lightning Network
 
-This is joint work work with [Stefan Richter](https://twitter.com/stefanwouldgo). It was initiated as follow-up research of the [probabilistic payment routing paper](https://arxiv.org/abs/2103.08576) on the Lightning Network and addresses the question of how to optimally conduct a multipart payment (MPP) split. Hence the repository name `mpp-splitter`. 
+This is joint work work with [Stefan Richter](https://twitter.com/stefanwouldgo). It was initiated as follow-up research of the [probabilistic payment delivery paper](https://arxiv.org/abs/2103.08576) on the Lightning Network and addresses the question of how to optimally conduct a multipart payment (MPP) split. Hence the repository name `mpp-splitter`. 
 
 The paper that you find in this repository also exists as a [pdf preprint on arxiv.org](https://arxiv.org/abs/2107.05322).
 
@@ -12,9 +12,13 @@ Thus this method allows for delivering payments that are orders of magnitude lar
 
 ## Source Code
 
-Since we did not find any open source min-cost flow solver for a general convex cost function we have implemented them in Scala and Python.
+There is a python package being actively developed which can be used to conduct mainnet tests and simulations at 
 
-**Due to illness I have to delay the upload of the code but we plan to share the code latest after July 19th** 
+https://github.com/renepickhardt/pickhardtpayments. 
+
+I strongly encourage you to follow the above mentioned repository. However it is based on the observation that the miniumum cost flow problem can be speed up in computation by piece wise linearization and transforming the problem to a discrete integer cost problem. [A minimal example using the google ortools lib can be found in this repo](https://github.com/renepickhardt/mpp-splitter/blob/master/Minimal%20Linearized%20min%20cost%20flow%20example%20for%20MPP.ipynb)
+
+There is also a [Java based implementation of our results](https://github.com/C-Otto/lnd-manageJ/issues/6) by [Carsten Otto](https://github.com/C-Otto) which currently needs a hand patched fix of lnd as [lightning labs did not fix their mpp API](https://github.com/lightningnetwork/lnd/issues/5746). Additionally I helped to integrate part of our results in core lighting as [they switched to probabilistic payment delivery](https://github.com/ElementsProject/lightning/pull/4771) and [ldk did the same with the inclusion of the uncertainty network](https://github.com/lightningdevkit/rust-lightning/pull/1227/). While [eclair is going a similar way](https://github.com/ACINQ/eclair/pull/2071#pullrequestreview-941902333) as ldk and also switched to [include the uncertainty cost in payment delivery](https://github.com/ACINQ/eclair/pull/2257) there [lnd has open issues figuring out if they want to include our results](https://github.com/lightningnetwork/lnd/issues/5988#issuecomment-1083535587).
 
 ## Funding & Future Work
 
@@ -42,6 +46,8 @@ Other good resources are the [lecture notes by Dorit Hochbaum](https://hochbaum.
 ## Media and Public
 
 * German Speaking Bitcoin Podcast Honigdachs invited us to the show 62 titled [Pickhardt-Payments](https://coinspondent.de/2021/07/11/honigdachs-62-pickhardt-payments/).
+* SLP 361: https://stephanlivera.com/episode/361/
+* Bitcoin Explained (The Van Wirdum Sjorsnado) : https://getpodcast.com/de/podcast/the-van-wirdum-sjorsnado/lightning-network-channel-payments-with-rene-pickhardt-episode-47_6636b03fc6
 * Andreas M. Antonopoulos has noted that our method [massively improves the Lightning Network and is a game changer](https://twitter.com/aantonop/status/1403823353366994946).
 * The work has been presented on [What Bitcoin Did Podcast](https://www.whatbitcoindid.com/podcast/mastering-lightning).
 * German speaking podcaster Blocktrainer has created an [easy to understand article](https://www.blocktrainer.de/pickhardt-payments-lightning-netzwerk/) about our results.
